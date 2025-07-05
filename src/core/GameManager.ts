@@ -183,6 +183,10 @@ export class GameManager {
   private handleMessage(message: GameMessage): void {
     console.log('GameManager: handleMessage called with:', message.type, message.data);
     switch (message.type) {
+      case 'ping':
+      case 'pong':
+        // Heartbeat messages are handled by PeerConnection, don't forward them
+        break;
       case 'playerJoined':
         if (this.isHost) {
           this.inPreLobby = true;

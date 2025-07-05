@@ -8,6 +8,10 @@ export class PeerConnection {
   private connected: boolean = false;
   private onMessage: ((message: GameMessage) => void) | null = null;
   private onConnectionChange: ((connected: boolean) => void) | null = null;
+  private heartbeatIntervalId: any = null;
+  private heartbeatTimeoutId: any = null;
+  private readonly HEARTBEAT_INTERVAL = 5000; // 5 seconds
+  private readonly HEARTBEAT_TIMEOUT = 10000; // 10 seconds
 
   constructor() {}
 
@@ -123,6 +127,9 @@ export class PeerConnection {
       this.connected = true;
       this.onConnectionChange?.(true);
       
+      // Start heartbeat mechanism
+      this.startHeartbeat();
+      
       if (!this.isHost) {
         console.log('Joiner sending playerJoined message');
         this.sendMessage({ type: 'playerJoined', data: {} });
@@ -132,7 +139,21 @@ export class PeerConnection {
     this.connection.on('data', (data: any) => {
       try {
         console.log('Peer received data:', data.type, data.data);
-        this.onMessage?.(data);
+        
+        // Handle heartbeat messages internally
+        if (data.type === 'ping') {
+          console.log('Received ping, sending pong');
+          this.sendMessage({ type: 'pong', data: {} });
+          this.resetHeartbeatTimeout();
+        } else if (data.type === 'pong') {
+          console.log('Received pong');
+          this.resetHeartbeatTimeout();
+        } else {
+          // Reset heartbeat timeout for any message
+          this.resetHeartbeatTimeout();
+          // Forward non-heartbeat messages
+          this.onMessage?.(data);
+        }
       } catch (error) {
         console.error('Error parsing message:', error);
       }
@@ -148,7 +169,57 @@ export class PeerConnection {
       console.error('Connection error:', error);
       this.connected = false;
       this.onConnectionChange?.(false);
+      this.stopHeartbeat();
     });
+  }
+
+  private startHeartbeat(): void {
+    console.log('Starting heartbeat mechanism');
+    
+    // Clear any existing heartbeat timers
+    this.stopHeartbeat();
+    
+    // Start sending ping messages regularly
+    this.heartbeatIntervalId = setInterval(() => {
+      if (this.connected && this.connection) {
+        console.log('Sending heartbeat ping');
+        this.sendMessage({ type: 'ping', data: {} });
+      }
+    }, this.HEARTBEAT_INTERVAL);
+    
+    // Set initial timeout
+    this.resetHeartbeatTimeout();
+  }
+
+  private resetHeartbeatTimeout(): void {
+    // Clear existing timeout
+    if (this.heartbeatTimeoutId) {
+      clearTimeout(this.heartbeatTimeoutId);
+    }
+    
+    // Set new timeout
+    this.heartbeatTimeoutId = setTimeout(() => {
+      this.handleHeartbeatTimeout();
+    }, this.HEARTBEAT_TIMEOUT);
+  }
+
+  private handleHeartbeatTimeout(): void {
+    console.log('Heartbeat timeout - connection appears to be lost');
+    this.connected = false;
+    this.onConnectionChange?.(false);
+    this.disconnect();
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatIntervalId) {
+      clearInterval(this.heartbeatIntervalId);
+      this.heartbeatIntervalId = null;
+    }
+    
+    if (this.heartbeatTimeoutId) {
+      clearTimeout(this.heartbeatTimeoutId);
+      this.heartbeatTimeoutId = null;
+    }
   }
 
   public sendMessage = (message: GameMessage): void => {
@@ -173,6 +244,11 @@ export class PeerConnection {
   };
 
   public disconnect = (): void => {
+    console.log('Disconnecting peer connection');
+    
+    // Stop heartbeat mechanism
+    this.stopHeartbeat();
+    
     if (this.connection) {
       try {
         this.connection.close();

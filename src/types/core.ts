@@ -16,7 +16,7 @@ export interface BaseGameState {
 }
 
 export interface GameMessage {
-  type: 'gameState' | 'move' | 'reset' | 'playerJoined' | 'playerInfo' | 'startGame' | 'kickPlayer' | 'requestPlayerInfo' | 'turnTimeout' | 'gameSettings';
+  type: 'gameState' | 'move' | 'reset' | 'playerJoined' | 'playerInfo' | 'startGame' | 'kickPlayer' | 'requestPlayerInfo' | 'turnTimeout' | 'gameSettings' | 'ping' | 'pong';
   data: any;
 }
 
