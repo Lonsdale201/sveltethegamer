@@ -233,6 +233,13 @@
     });
   }
 
+  function handleMainMenu() {
+    if (!gameManager) return;
+    
+    console.log('App: Returning to main menu');
+    gameManager.resetToMainMenu();
+  }
+
   function startTurnTimer() {
     // Clear existing timer
     if (turnTimer) {
@@ -310,6 +317,7 @@
       {gameSettings}
       on:move={handleMove}
       on:reset={handleReset}
+     on:mainMenu={handleMainMenu}
     />
   {/if}
 </main>

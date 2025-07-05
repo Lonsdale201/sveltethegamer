@@ -26,6 +26,40 @@ export class GameManager {
     this.onMessage = onMessage;
   }
 
+  // Method to reset to initial state (for returning to main menu)
+  resetToMainMenu(): void {
+    console.log('GameManager: Resetting to main menu');
+    
+    // Disconnect current connection
+    if (this.peer) {
+      this.peer.disconnect();
+    }
+    
+    // Reset all state to initial values
+    this.isHost = false;
+    this.myColor = 'red';
+    this.roomCode = '';
+    this.connecting = false;
+    this.connected = false;
+    this.gameStarted = false;
+    this.errorMessage = '';
+    this.inPreLobby = false;
+    this.opponentInfo = null;
+    this.gameSettings = { turnTimeLimit: 0, gameMode: 'color-duel' };
+    
+    // Keep player name but reset other info
+    this.myPlayerInfo = { 
+      id: '', 
+      name: this.myPlayerInfo.name, 
+      color: 'red' 
+    };
+    
+    // Create new peer connection
+    this.peer = new PeerConnection();
+    
+    this.onStateChange?.();
+  }
+
   // Getters for state
   getIsHost(): boolean { return this.isHost; }
   getMyColor(): Player { return this.myColor; }
@@ -159,9 +193,30 @@ export class GameManager {
     this.connected = isConnected;
     console.log('GameManager: handleConnectionChange called with:', isConnected, 'isHost:', this.isHost);
     if (!isConnected) {
+      // When disconnected, reset game state but keep room/lobby state for host
+      const wasHost = this.isHost;
+      const wasInGame = this.gameStarted;
+      
       this.gameStarted = false;
       this.inPreLobby = false;
       this.opponentInfo = null;
+      
+      // If we were in a game and lost connection, show error message
+      if (wasInGame) {
+        this.errorMessage = 'Connection lost - opponent disconnected';
+      }
+      
+      // If host loses connection, reset room state so they can create a new room
+      if (wasHost) {
+        this.roomCode = '';
+        this.isHost = false;
+        this.myColor = 'red';
+        this.myPlayerInfo = { 
+          ...this.myPlayerInfo, 
+          id: '', 
+          color: 'red' 
+        };
+      }
     } else if (isConnected && !this.isHost) {
       this.inPreLobby = true;
     } else if (isConnected && this.isHost) {

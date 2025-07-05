@@ -796,6 +796,25 @@
     box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
   }
 
+  .main-menu-btn {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+    margin-top: 1rem;
+  }
+
+  .main-menu-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(107, 114, 128, 0.4);
+  }
+
   @keyframes pulse-indicator {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }

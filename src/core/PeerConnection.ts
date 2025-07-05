@@ -205,9 +205,12 @@ export class PeerConnection {
 
   private handleHeartbeatTimeout(): void {
     console.log('Heartbeat timeout - connection appears to be lost');
+    
+    // Stop heartbeat to prevent further timeouts
+    this.stopHeartbeat();
+    
     this.connected = false;
     this.onConnectionChange?.(false);
-    this.disconnect();
   }
 
   private stopHeartbeat(): void {
