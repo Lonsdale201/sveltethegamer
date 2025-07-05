@@ -9,9 +9,10 @@
   import type { GameMessage, Player } from './types/core';
   import type { ColorDuelGameState, MoveData } from './types/colorDuel';
   import type { TowerWarGameState, TowerWarMoveData } from './types/towerWar';
+  import type { CountryWarGameState, CountryWarMoveData } from './types/countryWar';
 
   let gameManager: GameManager | null = null;
-  let gameState: ColorDuelGameState | TowerWarGameState;
+  let gameState: ColorDuelGameState | TowerWarGameState | CountryWarGameState;
   let gradientCanvas: HTMLCanvasElement;
   let granim: any;
   let turnTimer: number | null = null;
@@ -143,6 +144,9 @@
         } else if (gameSettings.gameMode === 'tower-war') {
           const moveData: TowerWarMoveData = message.data;
           gameState = currentGameMode.gameLogic.makeMove(gameState, moveData.action, moveData.player);
+        } else if (gameSettings.gameMode === 'country-war') {
+          const moveData: CountryWarMoveData = message.data;
+          gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
         }
         
         console.log('App handleGameMessage move - gameState after makeMove:', gameState);
@@ -197,6 +201,20 @@
         gameManager.sendMessage({
           type: 'move',
           data: { action, player: myColor }
+        });
+      }
+    } else if (gameSettings.gameMode === 'country-war') {
+      const moveData = event.detail;
+      const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
+      
+      if (newGameState !== gameState) {
+        gameState = newGameState;
+        startTurnTimer();
+        
+        // Send move to peer
+        gameManager.sendMessage({
+          type: 'move',
+          data: moveData
         });
       }
     }
