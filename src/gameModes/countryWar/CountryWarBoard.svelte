@@ -16,6 +16,7 @@
 
   let selectedTerritory: number | null = null;
   let selectedAction: CountryWarAction | null = null;
+  let hoveredTerritory: number | null = null;
 
   function handleTerritoryClick(territory: Territory) {
     console.log('Territory clicked:', territory);
@@ -63,6 +64,10 @@
     }
   }
 
+  function handleTerritoryHover(territory: Territory | null) {
+    hoveredTerritory = territory?.id || null;
+  }
+
   function handleActionSelect(action: CountryWarAction) {
     if (selectedTerritory === null) return;
 
@@ -92,6 +97,7 @@
     else classes += ' neutral';
     
     if (selectedTerritory === territory.id) classes += ' selected';
+    if (hoveredTerritory === territory.id) classes += ' hovered';
     
     // Can select if owned by player and has base
     if (territory.owner === myColor && territory.hasBase) classes += ' clickable';
@@ -102,6 +108,25 @@
       if (selectedTerr && selectedTerr.connections.includes(territory.id)) {
         classes += ' target';
       }
+    }
+    
+    return classes;
+  }
+
+  function getConnectionClass(territory: Territory, connectedTerritory: Territory): string {
+    let classes = 'connection-line';
+    
+    // Show green connections from selected territory
+    if (selectedTerritory === territory.id || selectedTerritory === connectedTerritory.id) {
+      classes += ' reachable';
+    }
+    
+    // Player connection styling
+    const isPlayerConnection = territory.owner === myColor && connectedTerritory.owner === myColor && territory.hasBase && connectedTerritory.hasBase;
+    if (isPlayerConnection) {
+      classes += ' player-connection';
+      if (myColor === 'red') classes += ' player-red';
+      else classes += ' player-blue';
     }
     
     return classes;
@@ -156,6 +181,18 @@
     });
   }
 
+  // Generate hexagon path
+  function getHexagonPath(cx: number, cy: number, size: number): string {
+    const points = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      const x = cx + size * Math.cos(angle);
+      const y = cy + size * Math.sin(angle);
+      points.push(`${x},${y}`);
+    }
+    return `M ${points.join(' L ')} Z`;
+  }
+
   $: myTerritories = gameState.territories.filter(t => t.owner === myColor);
   $: opponentColor = myColor === 'red' ? 'blue' : 'red';
   $: opponentTerritories = gameState.territories.filter(t => t.owner === opponentColor);
@@ -208,46 +245,42 @@
 
   <div class="battlefield">
     <div class="map-container">
-      <svg class="map" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
+      <svg class="map" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg">
         <!-- Connection lines -->
         {#each gameState.territories as territory}
           {#each territory.connections as connectionId}
             {#if territory.id < connectionId}
               {@const connectedTerritory = gameState.territories.find(t => t.id === connectionId)}
               {#if connectedTerritory}
-                {@const isPlayerConnection = territory.owner === myColor && connectedTerritory.owner === myColor && territory.hasBase && connectedTerritory.hasBase}
                 <line
                   x1={territory.position.x * 80 + 50}
-                  y1={territory.position.y * 120 + 80}
+                  y1={territory.position.y * 80 + 50}
                   x2={connectedTerritory.position.x * 80 + 50}
-                  y2={connectedTerritory.position.y * 120 + 80}
-                  class="connection-line"
-                  class:player-connection={isPlayerConnection}
-                  class:player-red={isPlayerConnection && myColor === 'red'}
-                  class:player-blue={isPlayerConnection && myColor === 'blue'}
+                  y2={connectedTerritory.position.y * 80 + 50}
+                  class={getConnectionClass(territory, connectedTerritory)}
                 />
               {/if}
             {/if}
           {/each}
         {/each}
 
-        <!-- Territories -->
+        <!-- Territories as hexagons -->
         {#each gameState.territories as territory}
           <g class="territory-group">
-            <!-- Territory circle -->
-            <circle
-              cx={territory.position.x * 80 + 50}
-              cy={territory.position.y * 120 + 80}
-              r="30"
+            <!-- Territory hexagon -->
+            <path
+              d={getHexagonPath(territory.position.x * 80 + 50, territory.position.y * 80 + 50, 28)}
               class={getTerritoryClass(territory)}
               on:click={() => handleTerritoryClick(territory)}
+              on:mouseenter={() => handleTerritoryHover(territory)}
+              on:mouseleave={() => handleTerritoryHover(null)}
             />
             
             <!-- Base indicator -->
             {#if territory.hasBase}
               <text
                 x={territory.position.x * 80 + 50}
-                y={territory.position.y * 120 + 65}
+                y={territory.position.y * 80 + 38}
                 class="base-icon"
                 text-anchor="middle"
               >
@@ -259,7 +292,7 @@
             {#if territory.baseValue > 0}
               <text
                 x={territory.position.x * 80 + 50}
-                y={territory.position.y * 120 + 90}
+                y={territory.position.y * 80 + 58}
                 class="territory-value"
                 text-anchor="middle"
               >
@@ -270,7 +303,7 @@
             <!-- Territory ID -->
             <text
               x={territory.position.x * 80 + 50}
-              y={territory.position.y * 120 + 105}
+              y={territory.position.y * 80 + 70}
               class="territory-id"
               text-anchor="middle"
             >
@@ -368,6 +401,9 @@
         {/if}
         <button on:click={() => dispatch('reset')} class="reset-btn">
           New Campaign
+        </button>
+        <button on:click={() => dispatch('mainMenu')} class="main-menu-btn">
+          Main Menu
         </button>
       </div>
     </div>
@@ -550,6 +586,15 @@
     stroke: #d1d5db;
     stroke-width: 2;
     opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+
+  .connection-line.reachable {
+    stroke: #10b981;
+    stroke-width: 4;
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #10b981);
+    animation: pulse-connection 2s ease-in-out infinite;
   }
 
   .connection-line.player-connection {
@@ -594,16 +639,22 @@
     animation: pulse-territory 1.5s ease-in-out infinite;
   }
 
+  .territory.hovered {
+    transform: scale(1.05);
+    filter: brightness(1.1) drop-shadow(0 0 6px rgba(59, 130, 246, 0.5));
+  }
+
   .territory.target {
     stroke: #10b981;
     stroke-width: 4;
     stroke-dasharray: 5,5;
     animation: dash 1s linear infinite;
+    filter: drop-shadow(0 0 6px #10b981);
   }
 
   .territory.clickable:hover {
     transform: scale(1.1);
-    filter: brightness(1.1);
+    filter: brightness(1.1) drop-shadow(0 0 8px rgba(59, 130, 246, 0.7));
   }
 
   .base-icon {
@@ -835,6 +886,15 @@
     }
     50% {
       transform: scale(1.05);
+    }
+  }
+
+  @keyframes pulse-connection {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
     }
   }
 
