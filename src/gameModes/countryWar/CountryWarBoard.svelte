@@ -24,9 +24,9 @@
       return;
     }
 
-    // If no territory selected, select this one (if owned by player)
+    // If no territory selected, select this one (if owned by player or can be targeted)
     if (selectedTerritory === null) {
-      if (territory.owner === myColor) {
+      if (territory.owner === myColor && territory.hasBase) {
         selectedTerritory = territory.id;
         selectedAction = null;
       }
@@ -55,8 +55,8 @@
         selectedAction = null;
       }
     } else {
-      // Select new territory if owned by player
-      if (territory.owner === myColor) {
+      // Select new territory if owned by player and has base
+      if (territory.owner === myColor && territory.hasBase) {
         selectedTerritory = territory.id;
         selectedAction = null;
       }
@@ -93,8 +93,10 @@
     
     if (selectedTerritory === territory.id) classes += ' selected';
     
-    if (territory.owner === myColor) classes += ' clickable';
+    // Can select if owned by player and has base
+    if (territory.owner === myColor && territory.hasBase) classes += ' clickable';
     
+    // Show as target if we have selected territory and action
     if (selectedTerritory !== null && selectedAction && territory.id !== selectedTerritory) {
       const selectedTerr = gameState.territories.find(t => t.id === selectedTerritory);
       if (selectedTerr && selectedTerr.connections.includes(territory.id)) {
@@ -133,9 +135,32 @@
     return classes;
   }
 
+  function getAvailableActions(): Territory[] {
+    if (selectedTerritory === null || selectedAction === null) return [];
+    
+    const selectedTerr = gameState.territories.find(t => t.id === selectedTerritory);
+    if (!selectedTerr) return [];
+    
+    return gameState.territories.filter(territory => {
+      if (territory.id === selectedTerritory) return false;
+      if (!selectedTerr.connections.includes(territory.id)) return false;
+      
+      const moveData = {
+        action: selectedAction,
+        fromTerritoryId: selectedTerritory,
+        toTerritoryId: territory.id,
+        player: myColor
+      };
+      
+      return canMakeMove(gameState, moveData, myColor);
+    });
+  }
+
   $: myTerritories = gameState.territories.filter(t => t.owner === myColor);
   $: opponentColor = myColor === 'red' ? 'blue' : 'red';
   $: opponentTerritories = gameState.territories.filter(t => t.owner === opponentColor);
+  $: myBases = gameState.territories.filter(t => t.owner === myColor && t.hasBase);
+  $: availableTargets = getAvailableActions();
 </script>
 
 <!-- Fixed Timer at Top -->
@@ -162,6 +187,7 @@
           <span class="color-indicator {myColor}"></span>
           <span class="player-name">{myPlayerInfo?.name || 'You'}</span>
           <span class="territory-count">{myTerritories.length}/8</span>
+          <span class="base-count">🏰 {myBases.length}</span>
           {#if gameState.currentTurn === myColor}
             <span class="turn-indicator">← Your turn</span>
           {/if}
@@ -171,6 +197,7 @@
           <span class="color-indicator {opponentColor}"></span>
           <span class="player-name">{opponentInfo?.name || 'Opponent'}</span>
           <span class="territory-count">{opponentTerritories.length}/8</span>
+          <span class="base-count">🏰 {gameState.territories.filter(t => t.owner === opponentColor && t.hasBase).length}</span>
           {#if gameState.currentTurn !== myColor}
             <span class="turn-indicator">← Their turn</span>
           {/if}
@@ -181,19 +208,23 @@
 
   <div class="battlefield">
     <div class="map-container">
-      <svg class="map" viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+      <svg class="map" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
         <!-- Connection lines -->
         {#each gameState.territories as territory}
           {#each territory.connections as connectionId}
             {#if territory.id < connectionId}
               {@const connectedTerritory = gameState.territories.find(t => t.id === connectionId)}
               {#if connectedTerritory}
+                {@const isPlayerConnection = territory.owner === myColor && connectedTerritory.owner === myColor && territory.hasBase && connectedTerritory.hasBase}
                 <line
-                  x1={territory.position.x * 100 + 50}
-                  y1={territory.position.y * 100 + 50}
-                  x2={connectedTerritory.position.x * 100 + 50}
-                  y2={connectedTerritory.position.y * 100 + 50}
+                  x1={territory.position.x * 80 + 50}
+                  y1={territory.position.y * 120 + 80}
+                  x2={connectedTerritory.position.x * 80 + 50}
+                  y2={connectedTerritory.position.y * 120 + 80}
                   class="connection-line"
+                  class:player-connection={isPlayerConnection}
+                  class:player-red={isPlayerConnection && myColor === 'red'}
+                  class:player-blue={isPlayerConnection && myColor === 'blue'}
                 />
               {/if}
             {/if}
@@ -203,38 +234,43 @@
         <!-- Territories -->
         {#each gameState.territories as territory}
           <g class="territory-group">
+            <!-- Territory circle -->
             <circle
-              cx={territory.position.x * 100 + 50}
-              cy={territory.position.y * 100 + 50}
-              r="35"
+              cx={territory.position.x * 80 + 50}
+              cy={territory.position.y * 120 + 80}
+              r="30"
               class={getTerritoryClass(territory)}
               on:click={() => handleTerritoryClick(territory)}
             />
             
             <!-- Base indicator -->
             {#if territory.hasBase}
-              <circle
-                cx={territory.position.x * 100 + 50}
-                cy={territory.position.y * 100 + 50}
-                r="20"
-                class="base-indicator"
-              />
+              <text
+                x={territory.position.x * 80 + 50}
+                y={territory.position.y * 120 + 65}
+                class="base-icon"
+                text-anchor="middle"
+              >
+                🏰
+              </text>
             {/if}
             
-            <!-- Territory value -->
-            <text
-              x={territory.position.x * 100 + 50}
-              y={territory.position.y * 100 + 55}
-              class="territory-value"
-              text-anchor="middle"
-            >
-              {territory.baseValue}
-            </text>
+            <!-- Territory value (only show if has value) -->
+            {#if territory.baseValue > 0}
+              <text
+                x={territory.position.x * 80 + 50}
+                y={territory.position.y * 120 + 90}
+                class="territory-value"
+                text-anchor="middle"
+              >
+                {territory.baseValue}
+              </text>
+            {/if}
             
             <!-- Territory ID -->
             <text
-              x={territory.position.x * 100 + 50}
-              y={territory.position.y * 100 + 35}
+              x={territory.position.x * 80 + 50}
+              y={territory.position.y * 120 + 105}
               class="territory-id"
               text-anchor="middle"
             >
@@ -248,10 +284,16 @@
 
   {#if connected && gameState.gameStarted && !gameState.winner && gameState.currentTurn === myColor}
     <div class="actions-container">
-      <h3>Choose Action {selectedTerritory !== null ? `for Territory ${selectedTerritory}` : ''}</h3>
+      <h3>
+        {#if selectedTerritory !== null}
+          Actions for Territory {selectedTerritory}
+        {:else}
+          Select a base to take action
+        {/if}
+      </h3>
       
       {#if selectedTerritory === null}
-        <p class="instruction">Select one of your territories first</p>
+        <p class="instruction">Click on one of your bases (🏰) to select it</p>
       {:else}
         <div class="action-buttons">
           <button 
@@ -259,7 +301,8 @@
             on:click={() => handleActionSelect('build')}
           >
             🏗️ Build Base
-            <span class="action-desc">Cost: 10 value</span>
+            <span class="action-desc">Cost: 10 army units</span>
+            <span class="requirement">Need: 10+ units</span>
           </button>
           
           <button 
@@ -268,6 +311,7 @@
           >
             ⚔️ Move Army
             <span class="action-desc">Attack or reinforce</span>
+            <span class="requirement">Leave 1 unit behind</span>
           </button>
           
           <button 
@@ -276,17 +320,31 @@
           >
             🔄 Merge Bases
             <span class="action-desc">Combine with ally</span>
+            <span class="requirement">Adjacent bases only</span>
           </button>
         </div>
         
         {#if selectedAction}
-          <p class="instruction">
-            {#if selectedAction === 'move'}
-              Click a connected territory to move your army
-            {:else if selectedAction === 'merge'}
-              Click a connected allied territory to merge bases
+          <div class="target-info">
+            <p class="instruction">
+              {#if selectedAction === 'move'}
+                Click a connected territory to move your army
+              {:else if selectedAction === 'merge'}
+                Click a connected allied base to merge
+              {:else if selectedAction === 'build'}
+                Building base on current territory...
+              {/if}
+            </p>
+            
+            {#if availableTargets.length > 0}
+              <div class="available-targets">
+                <span>Available targets: </span>
+                {#each availableTargets as target}
+                  <span class="target-chip">#{target.id}</span>
+                {/each}
+              </div>
             {/if}
-          </p>
+          </div>
         {/if}
       {/if}
     </div>
@@ -441,7 +499,7 @@
     color: #333;
   }
 
-  .territory-count {
+  .territory-count, .base-count {
     background: rgba(0, 0, 0, 0.1);
     padding: 0.25rem 0.5rem;
     border-radius: 12px;
@@ -473,7 +531,7 @@
 
   .battlefield {
     width: 100%;
-    max-width: 600px;
+    max-width: 500px;
   }
 
   .map-container {
@@ -494,6 +552,21 @@
     opacity: 0.6;
   }
 
+  .connection-line.player-connection {
+    stroke-width: 3;
+    opacity: 0.8;
+    stroke-dasharray: 5,5;
+    animation: dash 2s linear infinite;
+  }
+
+  .connection-line.player-red {
+    stroke: #ef4444;
+  }
+
+  .connection-line.player-blue {
+    stroke: #3b82f6;
+  }
+
   .territory {
     cursor: pointer;
     transition: all 0.3s ease;
@@ -501,7 +574,7 @@
   }
 
   .territory.neutral {
-    fill: #f3f4f6;
+    fill: #f9fafb;
     stroke: #9ca3af;
   }
 
@@ -518,6 +591,7 @@
   .territory.selected {
     stroke-width: 5;
     filter: drop-shadow(0 0 8px currentColor);
+    animation: pulse-territory 1.5s ease-in-out infinite;
   }
 
   .territory.target {
@@ -532,23 +606,21 @@
     filter: brightness(1.1);
   }
 
-  .base-indicator {
-    fill: none;
-    stroke: #1f2937;
-    stroke-width: 3;
-    stroke-dasharray: 3,3;
-    animation: rotate 2s linear infinite;
+  .base-icon {
+    font-size: 16px;
+    pointer-events: none;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
   }
 
   .territory-value {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
     fill: #1f2937;
     pointer-events: none;
   }
 
   .territory-id {
-    font-size: 12px;
+    font-size: 10px;
     fill: #6b7280;
     pointer-events: none;
   }
@@ -576,6 +648,7 @@
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
+    margin-bottom: 1rem;
   }
 
   .action-btn {
@@ -589,11 +662,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
     min-width: 140px;
     background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
     color: #374151;
     border: 2px solid #d1d5db;
+    position: relative;
   }
 
   .action-btn:hover:not(.disabled) {
@@ -616,6 +690,37 @@
   .action-desc {
     font-size: 0.8rem;
     opacity: 0.9;
+  }
+
+  .requirement {
+    font-size: 0.7rem;
+    opacity: 0.7;
+  }
+
+  .target-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .available-targets {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .target-chip {
+    background: #3b82f6;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
   }
 
   .game-over-overlay {
@@ -705,18 +810,18 @@
     }
   }
 
-  @keyframes dash {
-    to {
-      stroke-dashoffset: -10;
+  @keyframes pulse-territory {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
     }
   }
 
-  @keyframes rotate {
-    from {
-      transform: rotate(0deg);
-    }
+  @keyframes dash {
     to {
-      transform: rotate(360deg);
+      stroke-dashoffset: -10;
     }
   }
 

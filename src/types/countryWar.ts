@@ -26,22 +26,18 @@ export interface CountryWarMoveData {
   player: Player;
 }
 
-// Create the initial 8 territories in a strategic layout
+// Create the initial 8 territories in a vertical strategic layout
 export const initialCountryWarGameState: CountryWarGameState = {
   territories: [
-    // Top row (Red player starts here)
-    { id: 0, owner: 'red', baseValue: 5, hasBase: true, position: { x: 1, y: 0 }, connections: [1, 3] },
-    { id: 1, owner: null, baseValue: 0, hasBase: false, position: { x: 2, y: 0 }, connections: [0, 2, 4] },
-    { id: 2, owner: null, baseValue: 0, hasBase: false, position: { x: 3, y: 0 }, connections: [1, 5] },
-    
-    // Middle row
-    { id: 3, owner: null, baseValue: 0, hasBase: false, position: { x: 0, y: 1 }, connections: [0, 4, 6] },
-    { id: 4, owner: null, baseValue: 0, hasBase: false, position: { x: 2, y: 1 }, connections: [1, 3, 5, 7] },
-    { id: 5, owner: null, baseValue: 0, hasBase: false, position: { x: 4, y: 1 }, connections: [2, 4, 7] },
-    
-    // Bottom row (Blue player starts here)
-    { id: 6, owner: null, baseValue: 0, hasBase: false, position: { x: 1, y: 2 }, connections: [3, 7] },
-    { id: 7, owner: 'blue', baseValue: 5, hasBase: true, position: { x: 3, y: 2 }, connections: [4, 5, 6] },
+    // Vertical layout - Red at top, Blue at bottom
+    { id: 0, owner: 'red', baseValue: 5, hasBase: true, position: { x: 2, y: 0 }, connections: [1, 3] },
+    { id: 1, owner: null, baseValue: 0, hasBase: false, position: { x: 1, y: 1 }, connections: [0, 2, 4] },
+    { id: 2, owner: null, baseValue: 0, hasBase: false, position: { x: 3, y: 1 }, connections: [1, 5] },
+    { id: 3, owner: null, baseValue: 0, hasBase: false, position: { x: 0, y: 2 }, connections: [0, 4, 6] },
+    { id: 4, owner: null, baseValue: 0, hasBase: false, position: { x: 2, y: 2 }, connections: [1, 3, 5, 7] },
+    { id: 5, owner: null, baseValue: 0, hasBase: false, position: { x: 4, y: 2 }, connections: [2, 4, 7] },
+    { id: 6, owner: null, baseValue: 0, hasBase: false, position: { x: 1, y: 3 }, connections: [3, 7] },
+    { id: 7, owner: 'blue', baseValue: 5, hasBase: true, position: { x: 3, y: 3 }, connections: [4, 5, 6] },
   ],
   selectedTerritory: null,
   targetTerritory: null,
