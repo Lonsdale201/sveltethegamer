@@ -1,10 +1,13 @@
 import type { GameMode } from '../types/core';
 import ColorDuelBoard from './colorDuel/ColorDuelBoard.svelte';
 import TowerWarBoard from './towerWar/TowerWarBoard.svelte';
+import CountryWarBoard from './countryWar/CountryWarBoard.svelte';
 import * as ColorDuelLogic from './colorDuel/ColorDuelLogic';
 import * as TowerWarLogic from './towerWar/TowerWarLogic';
+import * as CountryWarLogic from './countryWar/CountryWarLogic';
 import { initialColorDuelGameState } from '../types/colorDuel';
 import { initialTowerWarGameState } from '../types/towerWar';
+import { initialCountryWarGameState } from '../types/countryWar';
 
 export const gameModes: GameMode[] = [
   {
@@ -22,6 +25,14 @@ export const gameModes: GameMode[] = [
     component: TowerWarBoard,
     initialState: () => ({ ...initialTowerWarGameState }),
     gameLogic: TowerWarLogic
+  },
+  {
+    id: 'country-war',
+    name: 'Country War',
+    description: 'Strategic territory conquest with base building and army movement',
+    component: CountryWarBoard,
+    initialState: () => ({ ...initialCountryWarGameState }),
+    gameLogic: CountryWarLogic
   }
 ];
 

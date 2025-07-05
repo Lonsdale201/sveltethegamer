@@ -26,6 +26,10 @@ export interface GameSettings {
   towerWarSettings?: {
     maxAttacks: number;
   };
+  countryWarSettings?: {
+    initialBaseValue: number;
+    buildCost: number;
+  };
 }
 
 export interface GameMode {
