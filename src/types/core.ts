@@ -39,4 +39,11 @@ export interface GameMode {
   component: any;
   initialState: () => any;
   gameLogic: any;
+  settingsDisplay?: {
+    [key: string]: {
+      label: string;
+      getValue: (settings: GameSettings) => string;
+      icon?: string;
+    };
+  };
 }

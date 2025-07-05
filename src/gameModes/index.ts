@@ -16,7 +16,14 @@ export const gameModes: GameMode[] = [
     description: 'Classic 3x3 grid battle with steal mechanic',
     component: ColorDuelBoard,
     initialState: () => ({ ...initialColorDuelGameState }),
-    gameLogic: ColorDuelLogic
+    gameLogic: ColorDuelLogic,
+    settingsDisplay: {
+      turnTimer: {
+        label: 'Turn Timer',
+        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        icon: '⏱️'
+      }
+    }
   },
   {
     id: 'tower-war',
@@ -24,7 +31,19 @@ export const gameModes: GameMode[] = [
     description: 'Build your tower to 10 levels while sabotaging your opponent',
     component: TowerWarBoard,
     initialState: () => ({ ...initialTowerWarGameState }),
-    gameLogic: TowerWarLogic
+    gameLogic: TowerWarLogic,
+    settingsDisplay: {
+      turnTimer: {
+        label: 'Turn Timer',
+        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        icon: '⏱️'
+      },
+      maxAttacks: {
+        label: 'Max Attacks',
+        getValue: (settings) => `${settings.towerWarSettings?.maxAttacks ?? 10} per player`,
+        icon: '💥'
+      }
+    }
   },
   {
     id: 'country-war',
@@ -32,7 +51,24 @@ export const gameModes: GameMode[] = [
     description: 'Strategic territory conquest with base building and army movement',
     component: CountryWarBoard,
     initialState: () => ({ ...initialCountryWarGameState }),
-    gameLogic: CountryWarLogic
+    gameLogic: CountryWarLogic,
+    settingsDisplay: {
+      turnTimer: {
+        label: 'Turn Timer',
+        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        icon: '⏱️'
+      },
+      initialBaseValue: {
+        label: 'Starting Army',
+        getValue: (settings) => `${settings.countryWarSettings?.initialBaseValue ?? 5} units per base`,
+        icon: '🏰'
+      },
+      buildCost: {
+        label: 'Build Cost',
+        getValue: (settings) => `${settings.countryWarSettings?.buildCost ?? 10} army units`,
+        icon: '🏗️'
+      }
+    }
   }
 ];
 

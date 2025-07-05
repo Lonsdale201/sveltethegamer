@@ -12,6 +12,7 @@
   $: opponentInfo = gameManager.getOpponentInfo();
   $: gameSettings = gameManager.getGameSettings();
   $: selectedGameMode = getGameMode(gameSettings.gameMode);
+  $: gameSettingsDisplay = selectedGameMode?.settingsDisplay || {};
 
   function handleStartGame() {
     gameManager.startGame();
@@ -100,14 +101,28 @@
 
   <div class="game-settings">
     <h3>Game Settings</h3>
-    <div class="settings-grid">
-      <div class="setting-item">
-        <span class="setting-label">Turn Timer:</span>
-        <span class="setting-value">
-          {gameSettings.turnTimeLimit === 0 ? 'Unlimited' : `${gameSettings.turnTimeLimit}s`}
-        </span>
+    {#if Object.keys(gameSettingsDisplay).length > 0}
+      <div class="settings-grid">
+        {#each Object.entries(gameSettingsDisplay) as [key, setting]}
+          <div class="setting-item">
+            <span class="setting-label">
+              {#if setting.icon}
+                <span class="setting-icon">{setting.icon}</span>
+              {/if}
+              {setting.label}:
+            </span>
+            <span class="setting-value">
+              {setting.getValue(gameSettings)}
+            </span>
+          </div>
+        {/each}
       </div>
-    </div>
+    {:else}
+      <div class="no-settings">
+        <span class="setting-icon">⚙️</span>
+        <span>Default game settings</span>
+      </div>
+    {/if}
   </div>
 
   {#if isHost}
@@ -322,17 +337,43 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .setting-item:last-child {
+    border-bottom: none;
   }
 
   .setting-label {
     font-weight: 500;
     color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .setting-icon {
+    font-size: 1rem;
   }
 
   .setting-value {
     color: #1f2937;
     font-weight: bold;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.9rem;
+  }
+
+  .no-settings {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    font-style: italic;
+    padding: 1rem;
   }
 
   .host-controls {
