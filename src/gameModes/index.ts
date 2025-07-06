@@ -1,10 +1,13 @@
 import type { GameMode } from '../types/core';
 import ColorDuelBoard from './colorDuel/ColorDuelBoard.svelte';
 import TowerWarBoard from './towerWar/TowerWarBoard.svelte';
+import ShadowCodeBoard from './shadowCode/ShadowCodeBoard.svelte';
 import * as ColorDuelLogic from './colorDuel/ColorDuelLogic';
 import * as TowerWarLogic from './towerWar/TowerWarLogic';
+import * as ShadowCodeLogic from './shadowCode/ShadowCodeLogic';
 import { initialColorDuelGameState } from '../types/colorDuel';
 import { initialTowerWarGameState } from '../types/towerWar';
+import { initialShadowCodeGameState } from '../types/shadowCode';
 
 export const gameModes: GameMode[] = [
   {
@@ -39,6 +42,21 @@ export const gameModes: GameMode[] = [
         label: 'Max Attacks',
         getValue: (settings) => `${settings.towerWarSettings?.maxAttacks ?? 10} per player`,
         icon: '💥'
+      }
+    }
+  },
+  {
+    id: 'shadow-code',
+    name: 'Shadow Code',
+    description: 'Crack your opponent\'s 3-digit secret code before they crack yours',
+    component: ShadowCodeBoard,
+    initialState: () => ({ ...initialShadowCodeGameState }),
+    gameLogic: ShadowCodeLogic,
+    settingsDisplay: {
+      turnTimer: {
+        label: 'Turn Timer',
+        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        icon: '⏱️'
       }
     }
   }

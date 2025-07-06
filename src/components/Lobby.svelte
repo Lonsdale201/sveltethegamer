@@ -141,7 +141,7 @@
 
 <div class="lobby">
   <div class="header">
-    <h1>🎯 Multiplayer Games</h1>
+    <h1>🎮 Shadow Games</h1>
     <p>Battle your friend in strategic games!</p>
     {#if errorMessage}
       <div class="error-message">
@@ -327,6 +327,13 @@
         </button>
         <button 
           class="tab-btn" 
+          class:active={activeTab === 'shadow-code'}
+          on:click={() => activeTab = 'shadow-code'}
+        >
+          🤫 Shadow Code
+        </button>
+        <button 
+          class="tab-btn" 
           class:active={activeTab === 'general'}
           on:click={() => activeTab = 'general'}
         >
@@ -413,6 +420,53 @@
               <li>Use your 10 attacks wisely - they're limited!</li>
               <li>Use defense strategically when expecting attacks</li>
               <li>Sometimes attacking is better than building</li>
+            </ul>
+          </div>
+        </div>
+      {:else if activeTab === 'shadow-code'}
+        <div class="game-rules">
+          <h4>🤫 Shadow Code</h4>
+          <p class="game-description">
+            A strategic code-breaking game where you must crack your opponent's secret 3-digit code before they crack yours.
+          </p>
+          
+          <div class="rules-section">
+            <h5>🎮 How to Play</h5>
+            <ul>
+              <li><strong>Setup:</strong> Each player chooses a secret 3-digit code (numbers 1-9)</li>
+              <li><strong>Goal:</strong> Be the first to guess your opponent's code correctly</li>
+              <li><strong>Turns:</strong> Take turns making guesses about the opponent's code</li>
+              <li><strong>Feedback:</strong> Get clues after each guess to help narrow down the code</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>🔍 Feedback System</h5>
+            <ul>
+              <li><strong>🔵 Exact Match:</strong> Correct number in the correct position</li>
+              <li><strong>🟡 Partial Match:</strong> Correct number but in the wrong position</li>
+              <li><strong>❌ No Match:</strong> None of your guessed numbers are in the code</li>
+              <li><strong>🎯 Perfect:</strong> All 3 numbers correct and in right positions = WIN!</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>🧠 Strategy Tips</h5>
+            <ul>
+              <li>Start with diverse numbers to gather maximum information</li>
+              <li>Pay attention to partial matches - they reveal which numbers are in the code</li>
+              <li>Use process of elimination based on previous feedback</li>
+              <li>Keep track of which numbers you've ruled out</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>🎯 Example</h5>
+            <ul>
+              <li><strong>Secret Code:</strong> 4-7-2</li>
+              <li><strong>Your Guess:</strong> 1-7-3 → Result: 🔵1 (7 is correct position)</li>
+              <li><strong>Your Guess:</strong> 4-5-2 → Result: 🔵2 (4 and 2 are correct positions)</li>
+              <li><strong>Your Guess:</strong> 4-7-2 → Result: 🎯 WIN!</li>
             </ul>
           </div>
         </div>
