@@ -77,12 +77,18 @@
 
   function getLastAnswerResult(player: Player) {
     const answers = gameState.playerAnswers[player];
+    debugLog(`getLastAnswerResult for ${player}: currentQuestion.id=${currentQuestion?.id}, answers.length=${answers.length}`);
     if (answers.length === 0) return null;
     
     // Find the answer for the current question
-    const currentAnswer = answers.find(answer => answer.questionId === currentQuestion?.id);
+    const currentAnswer = answers.find(answer => {
+      debugLog(`  Checking answer: questionId=${answer.questionId}, currentQuestion.id=${currentQuestion?.id}`);
+      return answer.questionId === currentQuestion?.id;
+    });
+    
     if (!currentAnswer) return null;
     
+    debugLog(`  Found answer for ${player}:`, currentAnswer);
     return currentAnswer;
   }
 
@@ -106,6 +112,16 @@
 
   $: myLastAnswer = getLastAnswerResult(myColor);
   $: opponentLastAnswer = getLastAnswerResult(opponentColor);
+
+  // Debug reactive statements
+  $: {
+    debugLog('BrainstormingBoard: Reactive update - gameState.showingFeedback:', gameState.showingFeedback);
+    debugLog('BrainstormingBoard: Reactive update - currentQuestion:', currentQuestion);
+    debugLog('BrainstormingBoard: Reactive update - myLastAnswer:', myLastAnswer);
+    debugLog('BrainstormingBoard: Reactive update - opponentLastAnswer:', opponentLastAnswer);
+    debugLog('BrainstormingBoard: Reactive update - bothAnswered:', bothAnswered);
+    debugLog('BrainstormingBoard: Reactive update - playerAnswers:', gameState.playerAnswers);
+  }
 </script>
 
 <!-- Fixed Timer at Top -->
@@ -210,6 +226,8 @@
         
         {#if gameState.showingFeedback}
           <!-- Feedback Phase -->
+          <!-- Debug log to check state when feedback mode activates -->
+          {debugLog('BrainstormingBoard: Entering feedback mode. myLastAnswer:', myLastAnswer, 'opponentLastAnswer:', opponentLastAnswer, 'currentQuestion.id:', currentQuestion?.id)}
           <div class="feedback-section">
             <h3>📊 Round Results</h3>
             
