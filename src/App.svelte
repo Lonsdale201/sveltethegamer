@@ -224,11 +224,42 @@
       }
     } else if (gameSettings.gameMode === 'brainstorming') {
       const moveData = event.detail;
+      
+      // For brainstorming, we need to handle simultaneous moves differently
+      // Don't check if it's our turn - both players can answer at the same time
+      if (currentGameMode.gameLogic.canMakeMove(gameState, moveData, myColor)) {
+        const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
+        
+        if (newGameState !== gameState) {
+          gameState = newGameState;
+          // Don't restart timer here - let the logic handle timing
+          
+          // Send move to peer
+          gameManager.sendMessage({
+            type: 'move',
+            data: moveData
+          });
+        }
+      }
+    }
+  }
+
+  function handleBrainstormingMove(event: CustomEvent) {
+    if (!gameManager || !connected || !gameStarted || !currentGameMode) return;
+    
+    const moveData = event.detail;
+    
+    // For brainstorming, allow moves regardless of turn
+    if (currentGameMode.gameLogic.canMakeMove(gameState, moveData, myColor)) {
       const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
       
       if (newGameState !== gameState) {
         gameState = newGameState;
-        startTurnTimer();
+        
+        // Only restart timer if both players answered (moving to next question)
+        if (newGameState.answersSubmitted?.red && newGameState.answersSubmitted?.blue) {
+          startTurnTimer();
+        }
         
         // Send move to peer
         gameManager.sendMessage({

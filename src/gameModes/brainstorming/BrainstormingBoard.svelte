@@ -57,14 +57,14 @@
       player: myColor
     };
 
-    if (canMakeMove(gameState, moveData, myColor)) {
-      debugLog('BrainstormingBoard dispatching answer:', moveData);
-      dispatch('move', moveData);
-      
-      // Reset form
-      selectedOption = '';
-      numberAnswer = '';
-    }
+    // Always allow submitting if we haven't answered yet
+    // The logic will handle validation
+    debugLog('BrainstormingBoard dispatching answer:', moveData);
+    dispatch('move', moveData);
+    
+    // Reset form
+    selectedOption = '';
+    numberAnswer = '';
   }
 
   function formatTime(seconds: number): string {

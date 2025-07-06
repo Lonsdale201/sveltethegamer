@@ -32,8 +32,7 @@ export function canMakeMove(gameState: BrainstormingGameState, moveData: Brainst
   
   if (gameState.winner || !gameState.gameStarted) return false;
   
-  // REMOVED: Turn checking - allow both players to answer simultaneously
-  // if (gameState.currentTurn !== player) return false;
+  // Allow both players to answer simultaneously - no turn checking needed
   
   // Check if player has already answered current question
   if (gameState.answersSubmitted[player]) return false;
@@ -86,13 +85,18 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
       newState.turnStartTime = Date.now();
       newState.timeRemaining = gameState.turnTimeLimit;
       
-      // IMPORTANT: Switch currentTurn to maintain GameManager's turn logic
-      // This ensures the system knows the game is progressing
+      // Keep currentTurn as is - both players can answer simultaneously
+      // Only switch turn when moving to next question to signal progress
       newState.currentTurn = gameState.currentTurn === 'red' ? 'blue' : 'red';
     } else {
       // Game is ending, switch turn one final time
       newState.currentTurn = gameState.currentTurn === 'red' ? 'blue' : 'red';
     }
+  } else {
+    // If only one player answered, don't switch turns yet
+    // This allows the other player to still answer
+    newState.turnStartTime = gameState.turnStartTime;
+    newState.timeRemaining = gameState.timeRemaining;
   }
   
   newState.winner = checkWinner(newState);
