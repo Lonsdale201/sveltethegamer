@@ -11,9 +11,10 @@
   import type { ColorDuelGameState, MoveData } from './types/colorDuel';
   import type { TowerWarGameState, TowerWarMoveData } from './types/towerWar';
   import type { ShadowCodeGameState, ShadowCodeMoveData } from './types/shadowCode';
+  import type { BrainstormingGameState, BrainstormingMoveData } from './types/brainstorming';
 
   let gameManager: GameManager | null = null;
-  let gameState: ColorDuelGameState | TowerWarGameState | ShadowCodeGameState;
+  let gameState: ColorDuelGameState | TowerWarGameState | ShadowCodeGameState | BrainstormingGameState;
   let gradientCanvas: HTMLCanvasElement;
   let granim: any;
   let turnTimer: number | null = null;
@@ -148,6 +149,9 @@
         } else if (gameSettings.gameMode === 'shadow-code') {
           const moveData: ShadowCodeMoveData = message.data;
           gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
+        } else if (gameSettings.gameMode === 'brainstorming') {
+          const moveData: BrainstormingMoveData = message.data;
+          gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
         }
         
         debugLog('App handleGameMessage move - gameState after makeMove:', gameState);
@@ -205,6 +209,20 @@
         });
       }
     } else if (gameSettings.gameMode === 'shadow-code') {
+      const moveData = event.detail;
+      const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
+      
+      if (newGameState !== gameState) {
+        gameState = newGameState;
+        startTurnTimer();
+        
+        // Send move to peer
+        gameManager.sendMessage({
+          type: 'move',
+          data: moveData
+        });
+      }
+    } else if (gameSettings.gameMode === 'brainstorming') {
       const moveData = event.detail;
       const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
       

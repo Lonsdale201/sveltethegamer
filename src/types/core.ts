@@ -26,9 +26,9 @@ export interface GameSettings {
   towerWarSettings?: {
     maxAttacks: number;
   };
-  countryWarSettings?: {
-    initialBaseValue: number;
-    buildCost: number;
+  brainstormingSettings?: {
+    targetScore: number;
+    language: 'HU' | 'EN';
   };
 }
 

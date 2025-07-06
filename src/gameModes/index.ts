@@ -2,12 +2,15 @@ import type { GameMode } from '../types/core';
 import ColorDuelBoard from './colorDuel/ColorDuelBoard.svelte';
 import TowerWarBoard from './towerWar/TowerWarBoard.svelte';
 import ShadowCodeBoard from './shadowCode/ShadowCodeBoard.svelte';
+import BrainstormingBoard from './brainstorming/BrainstormingBoard.svelte';
 import * as ColorDuelLogic from './colorDuel/ColorDuelLogic';
 import * as TowerWarLogic from './towerWar/TowerWarLogic';
 import * as ShadowCodeLogic from './shadowCode/ShadowCodeLogic';
+import * as BrainstormingLogic from './brainstorming/BrainstormingLogic';
 import { initialColorDuelGameState } from '../types/colorDuel';
 import { initialTowerWarGameState } from '../types/towerWar';
 import { initialShadowCodeGameState } from '../types/shadowCode';
+import { initialBrainstormingGameState } from '../types/brainstorming';
 
 export const gameModes: GameMode[] = [
   {
@@ -57,6 +60,31 @@ export const gameModes: GameMode[] = [
         label: 'Turn Timer',
         getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
         icon: '⏱️'
+      }
+    }
+  },
+  {
+    id: 'brainstorming',
+    name: 'Brainstorming',
+    description: 'Test your knowledge with quiz questions in multiple languages',
+    component: BrainstormingBoard,
+    initialState: () => ({ ...initialBrainstormingGameState }),
+    gameLogic: BrainstormingLogic,
+    settingsDisplay: {
+      turnTimer: {
+        label: 'Turn Timer',
+        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        icon: '⏱️'
+      },
+      targetScore: {
+        label: 'Target Score',
+        getValue: (settings) => `${settings.brainstormingSettings?.targetScore ?? 10} points to win`,
+        icon: '🎯'
+      },
+      language: {
+        label: 'Language',
+        getValue: (settings) => settings.brainstormingSettings?.language === 'HU' ? 'Hungarian 🇭🇺' : 'English 🇬🇧',
+        icon: '🌐'
       }
     }
   }

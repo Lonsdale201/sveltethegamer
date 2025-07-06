@@ -14,6 +14,8 @@
   let turnTimeLimit = 0;
   let selectedGameMode = 'color-duel';
   let maxTowerWarAttacks = 10;
+  let brainstormingTargetScore = 10;
+  let brainstormingLanguage = 'HU';
   let activeTab = 'color-duel';
   let nameInputFocused = false;
   let canShare = false;
@@ -52,6 +54,14 @@
     if (selectedGameMode === 'tower-war') {
       settings.towerWarSettings = {
         maxAttacks: maxTowerWarAttacks
+      };
+    }
+    
+    // Add Brainstorming specific settings if that mode is selected
+    if (selectedGameMode === 'brainstorming') {
+      settings.brainstormingSettings = {
+        targetScore: brainstormingTargetScore,
+        language: brainstormingLanguage
       };
     }
     
@@ -275,6 +285,38 @@
         </div>
       {/if}
       
+      {#if selectedGameMode === 'brainstorming'}
+        <div class="brainstorming-setting">
+          <label for="targetScore">Target score to win:</label>
+          <input 
+            id="targetScore"
+            type="number" 
+            bind:value={brainstormingTargetScore}
+            min="5"
+            max="50"
+            step="5"
+            class="timer-input"
+            placeholder="10"
+          />
+          <p class="setting-description">
+            First player to reach {brainstormingTargetScore} points wins
+          </p>
+          
+          <label for="language">Question language:</label>
+          <select 
+            id="language"
+            bind:value={brainstormingLanguage}
+            class="game-mode-select"
+          >
+            <option value="HU">Hungarian 🇭🇺</option>
+            <option value="EN">English 🇬🇧</option>
+          </select>
+          <p class="setting-description">
+            Questions will be displayed in {brainstormingLanguage === 'HU' ? 'Hungarian' : 'English'}
+          </p>
+        </div>
+      {/if}
+      
       <button 
         on:click={handleCreateRoom} 
         disabled={connecting || showNameInput}
@@ -331,6 +373,13 @@
           on:click={() => activeTab = 'shadow-code'}
         >
           🤫 Shadow Code
+        </button>
+        <button 
+          class="tab-btn" 
+          class:active={activeTab === 'brainstorming'}
+          on:click={() => activeTab = 'brainstorming'}
+        >
+          🧠 Brainstorming
         </button>
         <button 
           class="tab-btn" 
@@ -467,6 +516,61 @@
               <li><strong>Your Guess:</strong> 1-7-3 → Result: 🔵1 (7 is correct position)</li>
               <li><strong>Your Guess:</strong> 4-5-2 → Result: 🔵2 (4 and 2 are correct positions)</li>
               <li><strong>Your Guess:</strong> 4-7-2 → Result: 🎯 WIN!</li>
+            </ul>
+          </div>
+        </div>
+      {:else if activeTab === 'brainstorming'}
+        <div class="game-rules">
+          <h4>🧠 Brainstorming</h4>
+          <p class="game-description">
+            Test your knowledge in a fast-paced quiz battle. Answer questions correctly to earn points and reach the target score first!
+          </p>
+          
+          <div class="rules-section">
+            <h5>🎮 How to Play</h5>
+            <ul>
+              <li><strong>Goal:</strong> Be the first to reach the target score (default: 10 points)</li>
+              <li><strong>Questions:</strong> Random mix of multiple choice and number input questions</li>
+              <li><strong>Languages:</strong> Choose between Hungarian 🇭🇺 and English 🇬🇧</li>
+              <li><strong>Simultaneous:</strong> Both players answer the same question at the same time</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>📝 Question Types</h5>
+            <ul>
+              <li><strong>Multiple Choice:</strong> Select the correct answer from 4 options</li>
+              <li><strong>Number Input:</strong> Enter a numeric answer (year, quantity, etc.)</li>
+              <li><strong>Exact vs Close:</strong> Number questions reward exact answers more than close ones</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>🏆 Scoring System</h5>
+            <ul>
+              <li><strong>Multiple Choice:</strong> 1 point for correct answer, 0 for wrong</li>
+              <li><strong>Number Questions:</strong> 2 points for exact answer, 1 point for close answer</li>
+              <li><strong>Ties:</strong> If both players give the same wrong answer, both get points</li>
+              <li><strong>Target:</strong> First to reach target score wins (configurable: 5-50 points)</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>🧠 Strategy Tips</h5>
+            <ul>
+              <li>Speed matters - answer quickly but accurately</li>
+              <li>For number questions, educated guesses can still earn points</li>
+              <li>Pay attention to question patterns and topics</li>
+              <li>Don't overthink multiple choice - first instinct is often right</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>🌐 Languages Available</h5>
+            <ul>
+              <li><strong>Hungarian 🇭🇺:</strong> Questions about Hungarian history, culture, and general knowledge</li>
+              <li><strong>English 🇬🇧:</strong> Same questions translated to English for international players</li>
+              <li><strong>Expandable:</strong> Developers can easily add more languages and questions</li>
             </ul>
           </div>
         </div>
@@ -1004,6 +1108,23 @@
     font-size: 0.9rem;
     color: #6b7280;
     font-style: italic;
+  }
+
+  .brainstorming-setting {
+    margin-bottom: 1rem;
+    text-align: left;
+  }
+
+  .brainstorming-setting label {
+    display: block;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .brainstorming-setting label:first-child {
+    margin-top: 0;
   }
 
   .country-war-setting {
