@@ -1,6 +1,6 @@
-# Color Duel P2P Game
+# Shadow Games - P2P Multiplayer Platform
 
-A real-time multiplayer game platform built with Svelte, TypeScript, and PeerJS. Features multiple game modes including Color Duel (strategic tic-tac-toe) and Tower War (tower building strategy game).
+A real-time multiplayer game platform built with Svelte, TypeScript, and PeerJS. Features multiple strategic game modes with peer-to-peer connectivity, no central server required.
 
 ## 🎮 Game Modes
 
@@ -12,7 +12,12 @@ A real-time multiplayer game platform built with Svelte, TypeScript, and PeerJS.
 ### Tower War
 - **Objective**: Build your tower to 10 levels OR destroy opponent's tower
 - **Actions**: Build (+1 level), Attack (-1 enemy level), Defend (block next attack)
-- **Limits**: Need 3+ levels to attack, max 10 attacks per game
+- **Limits**: Need 3+ levels to attack, configurable max attacks per game
+
+### Shadow Code
+- **Objective**: Crack your opponent's secret 3-digit code before they crack yours
+- **Gameplay**: Take turns guessing codes and receive feedback clues
+- **Feedback**: Exact matches (🔵), partial matches (🟡), no matches (❌)
 
 ## 🚀 Quick Start
 
@@ -27,8 +32,8 @@ A real-time multiplayer game platform built with Svelte, TypeScript, and PeerJS.
 1. Fork this repository on GitHub
 2. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/color-duel-p2p-game.git
-   cd color-duel-p2p-game
+   git clone https://github.com/YOUR_USERNAME/shadow-games-p2p.git
+   cd shadow-games-p2p
    ```
 
 #### Option 2: Download Repository
@@ -64,13 +69,16 @@ src/
 ├── components/          # Svelte components
 │   ├── Lobby.svelte    # Main lobby for creating/joining games
 │   └── PreLobby.svelte # Pre-game lobby with player info
+├── config/             # Configuration files
+│   └── debug.ts        # Debug logging system
 ├── core/               # Core game management
 │   ├── GameManager.ts  # Main game state management
 │   └── PeerConnection.ts # WebRTC peer-to-peer connection
 ├── gameModes/          # Game mode implementations
 │   ├── index.ts        # Game mode registry
 │   ├── colorDuel/      # Color Duel game mode
-│   └── towerWar/       # Tower War game mode
+│   ├── towerWar/       # Tower War game mode
+│   └── shadowCode/     # Shadow Code game mode
 ├── types/              # TypeScript type definitions
 ├── utils/              # Utility functions
 └── main.ts            # Application entry point
@@ -88,12 +96,13 @@ src/
   - Connection state management
 
 #### PeerConnection (`src/core/PeerConnection.ts`)
-- **Purpose**: WebRTC peer-to-peer communication
-- **Responsibilities**:
+- **Purpose**: WebRTC peer-to-peer communication with enhanced reliability
+- **Features**:
   - Creating and joining rooms via PeerJS
   - Real-time message transmission
-  - Connection lifecycle management
-  - Error handling and reconnection
+  - **Heartbeat system** for connection monitoring
+  - Automatic reconnection detection
+  - Error handling and connection lifecycle management
 
 #### Game Mode System (`src/gameModes/`)
 - **Purpose**: Modular game implementations
@@ -101,6 +110,58 @@ src/
   - `*Board.svelte`: UI component for the game
   - `*Logic.ts`: Game rules and state management
   - Type definitions in `src/types/`
+
+## 🔧 New Developer Features
+
+### Debug System (`src/config/debug.ts`)
+A centralized debug logging system that can be toggled globally:
+
+```typescript
+import { debugLog, debugError, debugWarn } from '../config/debug';
+
+// Usage throughout the codebase
+debugLog('Game state updated:', gameState);
+debugError('Connection failed:', error);
+debugWarn('Invalid move attempted:', moveData);
+```
+
+**Configuration:**
+- Set `DEBUG_MODE = true` in `src/config/debug.ts` for development
+- Set `DEBUG_MODE = false` for production builds
+- All console.log statements replaced with debug functions
+
+### Heartbeat Connection System
+Enhanced peer-to-peer reliability with automatic connection monitoring:
+
+- **Ping/Pong mechanism**: Regular heartbeat messages every 5 seconds
+- **Timeout detection**: 10-second timeout for connection loss detection
+- **Automatic cleanup**: Proper resource cleanup on disconnection
+- **Graceful handling**: Distinguishes between intentional and accidental disconnects
+
+### Game Settings System
+Flexible configuration system for game modes with automatic UI generation:
+
+```typescript
+// In game mode definition
+settingsDisplay: {
+  turnTimer: {
+    label: 'Turn Timer',
+    getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+    icon: '⏱️'
+  },
+  maxAttacks: {
+    label: 'Max Attacks',
+    getValue: (settings) => `${settings.towerWarSettings?.maxAttacks ?? 10} per player`,
+    icon: '💥'
+  }
+}
+```
+
+**Features:**
+- **Optional display**: Settings only show if defined in game mode
+- **Custom icons**: Each setting can have an emoji icon
+- **Dynamic values**: Settings display computed values based on current configuration
+- **Automatic UI**: PreLobby automatically renders all defined settings
 
 ## 🎯 Adding New Game Modes
 
@@ -141,6 +202,7 @@ export const initialYourGameState: YourGameState = {
 Create `src/gameModes/yourGameMode/YourGameLogic.ts`:
 
 ```typescript
+import { debugLog } from '../../config/debug';
 import type { YourGameState, YourMoveData } from '../../types/yourGameMode';
 import type { GameSettings } from '../../types/core';
 
@@ -152,12 +214,14 @@ export function checkWinner(gameState: YourGameState): Player | null {
 
 // Validate if a move is legal
 export function canMakeMove(gameState: YourGameState, moveData: any, player: Player): boolean {
+  debugLog('YourGame canMakeMove:', { moveData, player, gameState });
   // Implement move validation
   return true;
 }
 
 // Execute a move and return new state
 export function makeMove(gameState: YourGameState, moveData: any, player: Player): YourGameState {
+  debugLog('YourGame makeMove:', { moveData, player });
   // Implement move execution
   const newState = { ...gameState };
   // Update game state based on move
@@ -191,6 +255,7 @@ Create `src/gameModes/yourGameMode/YourGameBoard.svelte`:
 ```svelte
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { debugLog } from '../../config/debug';
   import type { YourGameState } from '../../types/yourGameMode';
   import type { PlayerInfo, GameSettings } from '../../types/core';
   import { canMakeMove } from './YourGameLogic';
@@ -206,6 +271,7 @@ Create `src/gameModes/yourGameMode/YourGameBoard.svelte`:
 
   function handleMove(moveData: any) {
     if (canMakeMove(gameState, moveData, myColor)) {
+      debugLog('YourGame dispatching move:', moveData);
       dispatch('move', moveData);
     }
   }
@@ -241,14 +307,24 @@ export const gameModes: GameMode[] = [
     description: 'Brief description of your game',
     component: YourGameBoard,
     initialState: () => ({ ...initialYourGameState }),
-    gameLogic: YourGameLogic
+    gameLogic: YourGameLogic,
+    settingsDisplay: {
+      // Optional: Define settings that should appear in UI
+      customSetting: {
+        label: 'Custom Setting',
+        getValue: (settings) => `${settings.yourCustomValue}`,
+        icon: '⚙️'
+      }
+    }
   }
 ];
 ```
 
-## ⚙️ Adding Game Settings
+## ⚙️ Game Settings Configuration
 
-### Step 1: Extend GameSettings Type
+### Adding Custom Settings
+
+#### Step 1: Extend GameSettings Type
 Update `src/types/core.ts`:
 
 ```typescript
@@ -263,7 +339,7 @@ export interface GameSettings {
 }
 ```
 
-### Step 2: Add UI Controls
+#### Step 2: Add UI Controls
 Update `src/components/Lobby.svelte` to add setting controls:
 
 ```svelte
@@ -283,21 +359,20 @@ Update `src/components/Lobby.svelte` to add setting controls:
 {/if}
 ```
 
-### Step 3: Apply Settings in Game Logic
-Use the settings in your `resetGame` function:
+#### Step 3: Configure Settings Display
+Add to your game mode definition:
 
 ```typescript
-export function resetGame(gameSettings: GameSettings): YourGameState {
-  const customValue = gameSettings.yourGameSettings?.customSetting ?? 10;
-  
-  return {
-    ...initialYourGameState,
-    customProperty: customValue,
-    turnTimeLimit: gameSettings.turnTimeLimit,
-    gameStarted: true,
-  };
+settingsDisplay: {
+  customSetting: {
+    label: 'Custom Setting',
+    getValue: (settings) => `${settings.yourGameSettings?.customSetting ?? 10}`,
+    icon: '⚙️'
+  }
 }
 ```
+
+The settings will automatically appear in the PreLobby component with the specified label, icon, and computed value.
 
 ## 🔧 Development Guidelines
 
@@ -307,10 +382,20 @@ export function resetGame(gameSettings: GameSettings): YourGameState {
 - **Reactive Programming**: Leverage Svelte's reactivity system
 - **Modular Design**: Keep game modes independent and reusable
 
+### Debug Logging
+- **Use debug functions**: Replace all `console.log` with `debugLog`, `debugError`, or `debugWarn`
+- **Meaningful messages**: Include context and relevant data in debug messages
+- **Production ready**: Set `DEBUG_MODE = false` for production builds
+
 ### State Management
 - **Immutable Updates**: Always create new state objects
 - **Centralized Logic**: Keep game rules in `*Logic.ts` files
 - **Event-Driven**: Use Svelte's event system for component communication
+
+### Connection Handling
+- **Heartbeat awareness**: The system automatically handles connection monitoring
+- **Graceful degradation**: Handle connection loss scenarios appropriately
+- **Error boundaries**: Wrap connection operations in try-catch blocks
 
 ### Styling Guidelines
 - **Responsive Design**: Support mobile and desktop
@@ -323,6 +408,7 @@ export function resetGame(gameSettings: GameSettings): YourGameState {
 2. **Network Testing**: Test with different devices on same network
 3. **Edge Cases**: Test connection drops, timeouts, invalid moves
 4. **Mobile Testing**: Verify touch interactions work properly
+5. **Debug Mode**: Enable debug logging during development
 
 ## 🌐 Deployment
 
@@ -340,6 +426,7 @@ npm run build
 - **HTTPS Required**: WebRTC requires secure connections in production
 - **STUN/TURN Servers**: May need configuration for restrictive networks
 - **Browser Compatibility**: Ensure WebRTC support in target browsers
+- **Debug Mode**: Ensure `DEBUG_MODE = false` in production
 
 ## 🐛 Troubleshooting
 
@@ -349,6 +436,7 @@ npm run build
 - **Firewall/NAT**: Some networks block WebRTC
 - **Browser Compatibility**: Ensure WebRTC support
 - **HTTPS**: Required for production deployments
+- **Heartbeat timeout**: Check network stability
 
 #### Game State Issues
 - **State Synchronization**: Check message handling in GameManager
@@ -359,11 +447,13 @@ npm run build
 - **TypeScript Errors**: Run `npm run check` for type checking
 - **Build Failures**: Check for missing dependencies
 - **Hot Reload**: Restart dev server if changes aren't reflected
+- **Debug Output**: Toggle `DEBUG_MODE` for troubleshooting
 
 ### Debug Tools
 - **Browser DevTools**: Network tab for WebRTC connections
-- **Console Logging**: Extensive logging throughout the codebase
+- **Debug Logging**: Extensive logging throughout the codebase (when enabled)
 - **Svelte DevTools**: Browser extension for component inspection
+- **Connection Monitor**: Built-in heartbeat system for connection status
 
 ## 📝 Contributing
 
@@ -380,6 +470,7 @@ npm run build
 - Follow existing naming conventions
 - Add JSDoc comments for public functions
 - Keep functions small and focused
+- Use debug logging instead of console.log
 
 ## 📄 License
 
