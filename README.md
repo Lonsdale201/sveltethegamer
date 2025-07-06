@@ -658,13 +658,31 @@ The settings will automatically appear in the PreLobby component with the specif
 
 ## 🌐 Deployment
 
+### GitHub Pages Deployment
+
+This project is automatically deployed to GitHub Pages when changes are pushed to the main branch.
+
+**Live Demo**: https://YOUR_USERNAME.github.io/shadow-games-p2p/
+
+#### Setup Instructions:
+1. Fork this repository to your GitHub account
+2. Go to your repository settings → Pages
+3. Set Source to "GitHub Actions"
+4. Push changes to the main branch to trigger automatic deployment
+
+The GitHub Actions workflow will automatically:
+- Install dependencies
+- Build the project for production
+- Deploy to GitHub Pages
+
 ### Build for Production
 ```bash
 npm run build
 ```
 
 ### Deployment Options
-- **Static Hosting**: Netlify, Vercel, GitHub Pages
+- **GitHub Pages**: Automatic deployment via GitHub Actions (recommended)
+- **Static Hosting**: Netlify, Vercel
 - **CDN**: Any static file hosting service
 - **Self-Hosted**: Apache, Nginx, or any web server
 
