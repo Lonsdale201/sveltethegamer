@@ -32,6 +32,9 @@ export function canMakeMove(gameState: BrainstormingGameState, moveData: Brainst
   
   if (gameState.winner || !gameState.gameStarted) return false;
   
+  // REMOVED: Turn checking - allow both players to answer simultaneously
+  // if (gameState.currentTurn !== player) return false;
+  
   // Check if player has already answered current question
   if (gameState.answersSubmitted[player]) return false;
   
@@ -82,6 +85,13 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
       newState.questionStartTime = Date.now();
       newState.turnStartTime = Date.now();
       newState.timeRemaining = gameState.turnTimeLimit;
+      
+      // IMPORTANT: Switch currentTurn to maintain GameManager's turn logic
+      // This ensures the system knows the game is progressing
+      newState.currentTurn = gameState.currentTurn === 'red' ? 'blue' : 'red';
+    } else {
+      // Game is ending, switch turn one final time
+      newState.currentTurn = gameState.currentTurn === 'red' ? 'blue' : 'red';
     }
   }
   
@@ -153,10 +163,46 @@ export function skipTurn(gameState: BrainstormingGameState): BrainstormingGameSt
   const newState = { ...gameState };
   const now = Date.now();
   
-  // In brainstorming, we don't really skip turns since both players answer simultaneously
-  // But we can use this for timeout handling
+  // Handle timeout: mark current player as having submitted a "no answer" (0 points)
+  const currentPlayer = gameState.currentTurn;
+  const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+  
+  if (currentQuestion && !gameState.answersSubmitted[currentPlayer]) {
+    // Create a timeout answer with 0 points
+    const timeoutAnswer: PlayerAnswer = {
+      questionId: currentQuestion.id,
+      answer: 'TIMEOUT',
+      points: 0,
+      isExact: false,
+      timestamp: now
+    };
+    
+    newState.playerAnswers = {
+      red: [...gameState.playerAnswers.red],
+      blue: [...gameState.playerAnswers.blue]
+    };
+    newState.answersSubmitted = { ...gameState.answersSubmitted };
+    
+    newState.playerAnswers[currentPlayer].push(timeoutAnswer);
+    newState.answersSubmitted[currentPlayer] = true;
+    
+    // Check if both players have now answered (including timeout)
+    if (newState.answersSubmitted.red && newState.answersSubmitted.blue) {
+      // Move to next question
+      if (gameState.currentQuestionIndex < gameState.questions.length - 1) {
+        newState.currentQuestionIndex++;
+        newState.answersSubmitted = { red: false, blue: false };
+        newState.questionStartTime = now;
+      }
+    }
+  }
+  
+  // Always switch turns to maintain GameManager's turn logic
+  newState.currentTurn = gameState.currentTurn === 'red' ? 'blue' : 'red';
   newState.turnStartTime = now;
   newState.timeRemaining = gameState.turnTimeLimit;
+  
+  newState.winner = checkWinner(newState);
   
   return newState;
 }
