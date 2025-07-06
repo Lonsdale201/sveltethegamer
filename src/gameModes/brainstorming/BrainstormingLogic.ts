@@ -88,8 +88,13 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
   newState.playerAnswers[player].push(playerAnswer);
   newState.answersSubmitted[player] = true;
   
+  debugLog('Brainstorming makeMove: Player answer added:', playerAnswer);
+  debugLog('Brainstorming makeMove: Current answers submitted:', newState.answersSubmitted);
+  
   // Check if both players have answered
   const bothAnswered = newState.answersSubmitted.red && newState.answersSubmitted.blue;
+  
+  debugLog('Brainstorming makeMove: Both answered?', bothAnswered);
   
   if (bothAnswered) {
     // Start feedback phase
@@ -102,11 +107,14 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
       const playerAnswer = newState.playerAnswers[player].find(a => a.questionId === currentQuestion.id);
       if (playerAnswer) {
         newState.playerScores[player] += playerAnswer.points;
+        debugLog(`Brainstorming makeMove: Applied ${playerAnswer.points} points to ${player}, new score: ${newState.playerScores[player]}`);
       }
     }
     
     // Check for winner after applying scores
     newState.winner = checkWinner(newState);
+    
+    debugLog('Brainstorming makeMove: Feedback phase started, scores updated:', newState.playerScores);
   }
   
   return newState;
@@ -184,6 +192,8 @@ export function skipTurn(gameState: BrainstormingGameState): BrainstormingGameSt
   const newState = { ...gameState };
   const now = Date.now();
   
+  debugLog('Brainstorming skipTurn called, showingFeedback:', gameState.showingFeedback);
+  
   // If in feedback phase, advance to next question
   if (gameState.showingFeedback) {
     newState.showingFeedback = false;
@@ -197,6 +207,8 @@ export function skipTurn(gameState: BrainstormingGameState): BrainstormingGameSt
       newState.questionStartTime = now;
       newState.turnStartTime = now;
       newState.timeRemaining = gameState.turnTimeLimit;
+      
+      debugLog('Brainstorming skipTurn: Advanced to next question', newState.currentQuestionIndex);
     }
     
     newState.winner = checkWinner(newState);
@@ -206,43 +218,54 @@ export function skipTurn(gameState: BrainstormingGameState): BrainstormingGameSt
   // Handle timeout: mark players who haven't submitted as having submitted a "no answer" (0 points)
   const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
   
+  debugLog('Brainstorming skipTurn: Handling timeout for question:', currentQuestion?.id);
+  debugLog('Brainstorming skipTurn: Current answers submitted before timeout:', gameState.answersSubmitted);
+  
   if (currentQuestion) {
+    newState.playerAnswers = {
+      red: [...gameState.playerAnswers.red],
+      blue: [...gameState.playerAnswers.blue]
+    };
+    newState.answersSubmitted = { ...gameState.answersSubmitted };
+    
+    let anyTimeoutAnswersAdded = false;
+    
     for (const player of ['red', 'blue'] as Player[]) {
       if (!gameState.answersSubmitted[player]) {
         // Create a timeout answer with 0 points
         const timeoutAnswer: PlayerAnswer = {
           questionId: currentQuestion.id,
-          answer: 'TIMEOUT',
+          answer: 'No answer (timeout)',
           points: 0,
           isExact: false,
           timestamp: now
         };
         
-        newState.playerAnswers = {
-          red: [...gameState.playerAnswers.red],
-          blue: [...gameState.playerAnswers.blue]
-        };
-        newState.answersSubmitted = { ...gameState.answersSubmitted };
-        
         newState.playerAnswers[player].push(timeoutAnswer);
         newState.answersSubmitted[player] = true;
+        anyTimeoutAnswersAdded = true;
+        
+        debugLog(`Brainstorming skipTurn: Added timeout answer for ${player}:`, timeoutAnswer);
       }
     }
     
-    // Check if both players have now answered (including timeout)
-    if (newState.answersSubmitted.red && newState.answersSubmitted.blue) {
+    // If we added timeout answers, start feedback phase
+    if (anyTimeoutAnswersAdded && newState.answersSubmitted.red && newState.answersSubmitted.blue) {
       // Start feedback phase
       newState.showingFeedback = true;
       newState.feedbackStartTime = now;
       newState.feedbackTimeRemaining = 6;
       
-      // Apply scores
+      // Apply scores for all answers (including timeout answers with 0 points)
       for (const player of ['red', 'blue'] as Player[]) {
         const playerAnswer = newState.playerAnswers[player].find(a => a.questionId === currentQuestion.id);
         if (playerAnswer) {
           newState.playerScores[player] += playerAnswer.points;
+          debugLog(`Brainstorming skipTurn: Applied ${playerAnswer.points} points to ${player} (timeout), new score: ${newState.playerScores[player]}`);
         }
       }
+      
+      debugLog('Brainstorming skipTurn: Started feedback phase after timeout, scores:', newState.playerScores);
     }
   }
   
@@ -252,6 +275,13 @@ export function skipTurn(gameState: BrainstormingGameState): BrainstormingGameSt
   newState.timeRemaining = gameState.turnTimeLimit;
   
   newState.winner = checkWinner(newState);
+  
+  debugLog('Brainstorming skipTurn: Final state:', {
+    showingFeedback: newState.showingFeedback,
+    answersSubmitted: newState.answersSubmitted,
+    scores: newState.playerScores,
+    winner: newState.winner
+  });
   
   return newState;
 }
