@@ -110,8 +110,25 @@
     return Math.max(0, Math.min(100, (elapsed / 6) * 100));
   }
 
-  $: myLastAnswer = getLastAnswerResult(myColor);
-  $: opponentLastAnswer = getLastAnswerResult(opponentColor);
+  // Use key-based reactivity to force re-evaluation when feedback state changes
+  $: feedbackKey = `${gameState.currentQuestionIndex}-${gameState.showingFeedback}-${gameState.playerAnswers.red.length}-${gameState.playerAnswers.blue.length}`;
+  
+  // Force reactive re-evaluation of answers when feedback key changes
+  $: myLastAnswer = (() => {
+    // Force dependency on feedbackKey
+    feedbackKey;
+    const result = getLastAnswerResult(myColor);
+    debugLog('BrainstormingBoard: myLastAnswer reactive update:', result);
+    return result;
+  })();
+  
+  $: opponentLastAnswer = (() => {
+    // Force dependency on feedbackKey
+    feedbackKey;
+    const result = getLastAnswerResult(opponentColor);
+    debugLog('BrainstormingBoard: opponentLastAnswer reactive update:', result);
+    return result;
+  })();
 
   // Debug reactive statements
   $: {
@@ -121,6 +138,7 @@
     debugLog('BrainstormingBoard: Reactive update - opponentLastAnswer:', opponentLastAnswer);
     debugLog('BrainstormingBoard: Reactive update - bothAnswered:', bothAnswered);
     debugLog('BrainstormingBoard: Reactive update - playerAnswers:', gameState.playerAnswers);
+    debugLog('BrainstormingBoard: Reactive update - feedbackKey:', feedbackKey);
   }
 </script>
 
@@ -201,188 +219,191 @@
   </div>
 
   {#if currentQuestion && !gameState.winner}
-    <div class="question-container">
-      <div class="question-header">
-        <div class="question-number">
-          Question {gameState.currentQuestionIndex + 1} / {gameState.questions.length}
-        </div>
-        <div class="language-indicator">
-          {gameState.gameSettings.language === 'HU' ? '🇭🇺' : '🇬🇧'}
-        </div>
-      </div>
-      
-      <div class="question-card" class:feedback-mode={gameState.showingFeedback}>
-        {#if gameState.showingFeedback}
-          <!-- Feedback Progress Border -->
-          <div class="feedback-progress-border">
-            <div 
-              class="feedback-progress-fill" 
-              style="width: {getFeedbackProgress()}%"
-            ></div>
+    <!-- Use key block to force re-render when feedback state changes -->
+    {#key feedbackKey}
+      <div class="question-container">
+        <div class="question-header">
+          <div class="question-number">
+            Question {gameState.currentQuestionIndex + 1} / {gameState.questions.length}
           </div>
-        {/if}
-        
-        <h2 class="question-text">{currentQuestion.text}</h2>
-        
-        {#if gameState.showingFeedback}
-          <!-- Feedback Phase -->
-          <!-- Debug log to check state when feedback mode activates -->
-          {debugLog('BrainstormingBoard: Entering feedback mode. myLastAnswer:', myLastAnswer, 'opponentLastAnswer:', opponentLastAnswer, 'currentQuestion.id:', currentQuestion?.id)}
-          <div class="feedback-section">
-            <h3>📊 Round Results</h3>
-            
-            <div class="feedback-grid">
-              <div class="feedback-card my-feedback">
-                <div class="feedback-header">
-                  <span class="color-indicator {myColor}"></span>
-                  <span>{myPlayerInfo?.name || 'You'}</span>
-                </div>
-                {#if myLastAnswer}
-                  <div class="feedback-answer">
-                    <div class="answer-label">Your Answer:</div>
-                    <div class="answer-value">{myLastAnswer.answer}</div>
-                  </div>
-                  <div class="feedback-points" class:correct={myLastAnswer.points > 0}>
-                    {#if myLastAnswer.points > 0}
-                      +{myLastAnswer.points} points {myLastAnswer.isExact ? '🎯' : '📍'}
-                    {:else}
-                      0 points ❌
-                    {/if}
-                  </div>
-                {:else}
-                  <div class="feedback-answer">
-                    <div class="answer-label">Your Answer:</div>
-                    <div class="answer-value timeout">No answer (timeout)</div>
-                  </div>
-                  <div class="feedback-points">
-                    0 points ❌
-                  </div>
-                {/if}
-              </div>
-              
-              <div class="feedback-card opponent-feedback">
-                <div class="feedback-header">
-                  <span class="color-indicator {opponentColor}"></span>
-                  <span>{opponentInfo?.name || 'Opponent'}</span>
-                </div>
-                {#if opponentLastAnswer}
-                  <div class="feedback-answer">
-                    <div class="answer-label">Their Answer:</div>
-                    <div class="answer-value">{opponentLastAnswer.answer}</div>
-                  </div>
-                  <div class="feedback-points" class:correct={opponentLastAnswer.points > 0}>
-                    {#if opponentLastAnswer.points > 0}
-                      +{opponentLastAnswer.points} points {opponentLastAnswer.isExact ? '🎯' : '📍'}
-                    {:else}
-                      0 points ❌
-                    {/if}
-                  </div>
-                {:else}
-                  <div class="feedback-answer">
-                    <div class="answer-label">Their Answer:</div>
-                    <div class="answer-value timeout">No answer (timeout)</div>
-                  </div>
-                  <div class="feedback-points">
-                    0 points ❌
-                  </div>
-                {/if}
-              </div>
-            </div>
-            
-            <div class="correct-answer">
-              <strong>Correct answer:</strong> {currentQuestion.correctAnswer}
-            </div>
-            
-            <div class="next-question-info">
-              {#if !isLastQuestion}
-                Next question in {gameState.feedbackTimeRemaining} seconds...
-              {:else}
-                Calculating final results...
-              {/if}
-            </div>
+          <div class="language-indicator">
+            {gameState.gameSettings.language === 'HU' ? '🇭🇺' : '🇬🇧'}
           </div>
-        {:else}
-          <!-- Question Phase -->
-          {#if !hasAnswered}
-            <div class="answer-section">
-              {#if currentQuestion.type === 'select'}
-                <div class="options-container">
-                  {#each currentQuestion.options || [] as option}
-                    <label class="option-label">
-                      <input 
-                        type="radio" 
-                        bind:group={selectedOption} 
-                        value={option}
-                        class="option-radio"
-                      />
-                      <span class="option-text">{option}</span>
-                    </label>
-                  {/each}
-                </div>
-              {:else if currentQuestion.type === 'number'}
-                <div class="number-input-container">
-                  <input 
-                    type="number" 
-                    bind:value={numberAnswer}
-                    placeholder="Enter your answer"
-                    class="number-input"
-                  />
-                </div>
-              {/if}
-              
-              <button 
-                class="submit-btn"
-                on:click={handleSubmitAnswer}
-                disabled={currentQuestion.type === 'select' ? !selectedOption : !numberAnswer}
-              >
-                🎯 Submit Answer
-              </button>
-            </div>
-          {:else}
-            <div class="waiting-section">
-              <div class="answer-submitted">
-                ✅ Answer submitted!
-                {#if myLastAnswer}
-                  <div class="my-answer">
-                    Your answer: <strong>{myLastAnswer.answer}</strong>
-                  </div>
-                {/if}
-              </div>
-              
-              {#if !opponentAnswered}
-                <div class="waiting-opponent">
-                  Waiting for opponent to answer...
-                  <div class="loading-dots">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                  </div>
-                </div>
-              {:else}
-                <div class="both-answered">
-                  Both players answered! Showing results...
-                </div>
-              {/if}
+        </div>
+        
+        <div class="question-card" class:feedback-mode={gameState.showingFeedback}>
+          {#if gameState.showingFeedback}
+            <!-- Feedback Progress Border -->
+            <div class="feedback-progress-border">
+              <div 
+                class="feedback-progress-fill" 
+                style="width: {getFeedbackProgress()}%"
+              ></div>
             </div>
           {/if}
           
-          <div class="question-info">
-            <div class="points-info">
-              {#if currentQuestion.type === 'select'}
-                <span class="points-label">Correct answer: {currentQuestion.exactPoints} points</span>
-              {:else}
-                <span class="points-label">
-                  Exact answer: {currentQuestion.exactPoints} points
-                  {#if currentQuestion.closePoints}
-                    • Close answer: {currentQuestion.closePoints} points
+          <h2 class="question-text">{currentQuestion.text}</h2>
+          
+          {#if gameState.showingFeedback}
+            <!-- Feedback Phase -->
+            <!-- Debug log to check state when feedback mode activates -->
+            {debugLog('BrainstormingBoard: Entering feedback mode. myLastAnswer:', myLastAnswer, 'opponentLastAnswer:', opponentLastAnswer, 'currentQuestion.id:', currentQuestion?.id)}
+            <div class="feedback-section">
+              <h3>📊 Round Results</h3>
+              
+              <div class="feedback-grid">
+                <div class="feedback-card my-feedback">
+                  <div class="feedback-header">
+                    <span class="color-indicator {myColor}"></span>
+                    <span>{myPlayerInfo?.name || 'You'}</span>
+                  </div>
+                  {#if myLastAnswer}
+                    <div class="feedback-answer">
+                      <div class="answer-label">Your Answer:</div>
+                      <div class="answer-value">{myLastAnswer.answer}</div>
+                    </div>
+                    <div class="feedback-points" class:correct={myLastAnswer.points > 0}>
+                      {#if myLastAnswer.points > 0}
+                        +{myLastAnswer.points} points {myLastAnswer.isExact ? '🎯' : '📍'}
+                      {:else}
+                        0 points ❌
+                      {/if}
+                    </div>
+                  {:else}
+                    <div class="feedback-answer">
+                      <div class="answer-label">Your Answer:</div>
+                      <div class="answer-value timeout">No answer (timeout)</div>
+                    </div>
+                    <div class="feedback-points">
+                      0 points ❌
+                    </div>
                   {/if}
-                </span>
-              {/if}
+                </div>
+                
+                <div class="feedback-card opponent-feedback">
+                  <div class="feedback-header">
+                    <span class="color-indicator {opponentColor}"></span>
+                    <span>{opponentInfo?.name || 'Opponent'}</span>
+                  </div>
+                  {#if opponentLastAnswer}
+                    <div class="feedback-answer">
+                      <div class="answer-label">Their Answer:</div>
+                      <div class="answer-value">{opponentLastAnswer.answer}</div>
+                    </div>
+                    <div class="feedback-points" class:correct={opponentLastAnswer.points > 0}>
+                      {#if opponentLastAnswer.points > 0}
+                        +{opponentLastAnswer.points} points {opponentLastAnswer.isExact ? '🎯' : '📍'}
+                      {:else}
+                        0 points ❌
+                      {/if}
+                    </div>
+                  {:else}
+                    <div class="feedback-answer">
+                      <div class="answer-label">Their Answer:</div>
+                      <div class="answer-value timeout">No answer (timeout)</div>
+                    </div>
+                    <div class="feedback-points">
+                      0 points ❌
+                    </div>
+                  {/if}
+                </div>
+              </div>
+              
+              <div class="correct-answer">
+                <strong>Correct answer:</strong> {currentQuestion.correctAnswer}
+              </div>
+              
+              <div class="next-question-info">
+                {#if !isLastQuestion}
+                  Next question in {gameState.feedbackTimeRemaining} seconds...
+                {:else}
+                  Calculating final results...
+                {/if}
+              </div>
             </div>
-          </div>
-        {/if}
+          {:else}
+            <!-- Question Phase -->
+            {#if !hasAnswered}
+              <div class="answer-section">
+                {#if currentQuestion.type === 'select'}
+                  <div class="options-container">
+                    {#each currentQuestion.options || [] as option}
+                      <label class="option-label">
+                        <input 
+                          type="radio" 
+                          bind:group={selectedOption} 
+                          value={option}
+                          class="option-radio"
+                        />
+                        <span class="option-text">{option}</span>
+                      </label>
+                    {/each}
+                  </div>
+                {:else if currentQuestion.type === 'number'}
+                  <div class="number-input-container">
+                    <input 
+                      type="number" 
+                      bind:value={numberAnswer}
+                      placeholder="Enter your answer"
+                      class="number-input"
+                    />
+                  </div>
+                {/if}
+                
+                <button 
+                  class="submit-btn"
+                  on:click={handleSubmitAnswer}
+                  disabled={currentQuestion.type === 'select' ? !selectedOption : !numberAnswer}
+                >
+                  🎯 Submit Answer
+                </button>
+              </div>
+            {:else}
+              <div class="waiting-section">
+                <div class="answer-submitted">
+                  ✅ Answer submitted!
+                  {#if myLastAnswer}
+                    <div class="my-answer">
+                      Your answer: <strong>{myLastAnswer.answer}</strong>
+                    </div>
+                  {/if}
+                </div>
+                
+                {#if !opponentAnswered}
+                  <div class="waiting-opponent">
+                    Waiting for opponent to answer...
+                    <div class="loading-dots">
+                      <div class="dot"></div>
+                      <div class="dot"></div>
+                      <div class="dot"></div>
+                    </div>
+                  </div>
+                {:else}
+                  <div class="both-answered">
+                    Both players answered! Showing results...
+                  </div>
+                {/if}
+              </div>
+            {/if}
+            
+            <div class="question-info">
+              <div class="points-info">
+                {#if currentQuestion.type === 'select'}
+                  <span class="points-label">Correct answer: {currentQuestion.exactPoints} points</span>
+                {:else}
+                  <span class="points-label">
+                    Exact answer: {currentQuestion.exactPoints} points
+                    {#if currentQuestion.closePoints}
+                      • Close answer: {currentQuestion.closePoints} points
+                    {/if}
+                  </span>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        </div>
       </div>
-    </div>
+    {/key}
   {/if}
 
   {#if gameState.winner}
