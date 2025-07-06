@@ -2,6 +2,10 @@
 
 A real-time multiplayer game platform built with Svelte, TypeScript, and PeerJS. Features multiple strategic game modes with peer-to-peer connectivity, no central server required.
 
+##
+
+DEMO: https://lonsdale201.github.io/sveltethegamer/
+
 ## 🎮 Game Modes
 
 ### Color Duel
@@ -752,4 +756,3 @@ For questions, issues, or contributions:
 
 ---
 
-**Happy coding! 🎮**
