@@ -2,6 +2,7 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import { gameModes } from '../gameModes';
   import type { GameManager } from '../core/GameManager';
+  import { savePlayerName, loadPlayerName } from '../utils/storage';
 
   export let gameManager: GameManager;
 
@@ -34,6 +35,13 @@
   onMount(() => {
     if (navigator.share) {
       canShare = true;
+    }
+    
+    // Load saved player name from localStorage
+    const savedName = loadPlayerName();
+    if (savedName) {
+      playerName = savedName;
+      gameManager.setPlayerName(savedName);
     }
   });
 
@@ -92,6 +100,8 @@
   function handleNameSubmit() {
     if (playerName.trim()) {
       showNameInput = false;
+      // Save name to localStorage when submitted
+      savePlayerName(playerName.trim());
       gameManager.setPlayerName(playerName.trim());
     }
   }
@@ -101,10 +111,17 @@
     // Limit to 12 characters
     if (value.length <= 12) {
       playerName = value;
+      // Save to localStorage as user types (debounced by browser)
+      if (value.trim()) {
+        savePlayerName(value.trim());
+      }
     } else {
       // Truncate and update the input field
       playerName = value.slice(0, 12);
       event.target.value = playerName;
+      if (playerName.trim()) {
+        savePlayerName(playerName.trim());
+      }
     }
   }
 

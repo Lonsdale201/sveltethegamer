@@ -2,6 +2,7 @@ import { debugLog, debugError } from '../config/debug';
 import type { GameMessage, PlayerInfo, Player, GameSettings } from '../types/core';
 import { PeerConnection } from './PeerConnection';
 import { sanitizePlayerName } from '../utils/sanitizer';
+import { savePlayerName } from '../utils/storage';
 
 export class GameManager {
   private peer: PeerConnection | null = null;
@@ -79,6 +80,11 @@ export class GameManager {
     const sanitizedName = sanitizePlayerName(name, 12);
     this.myPlayerInfo.name = sanitizedName;
     this.myPlayerInfo = { ...this.myPlayerInfo };
+    
+    // Save to localStorage whenever name is set
+    if (sanitizedName.trim()) {
+      savePlayerName(sanitizedName);
+    }
     
     if (this.connected && this.peer && this.inPreLobby) {
       this.peer.sendMessage({
