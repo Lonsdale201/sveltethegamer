@@ -193,7 +193,6 @@
           on:input={handleNameInput}
           on:focus={() => nameInputFocused = true}
           on:blur={() => nameInputFocused = false}
-          autofocus
         />
         <div class="character-counter">
           {playerName.length}/12
@@ -1145,23 +1144,6 @@
   }
 
   .brainstorming-setting label:first-child {
-    margin-top: 0;
-  }
-
-  .country-war-setting {
-    margin-bottom: 1rem;
-    text-align: left;
-  }
-
-  .country-war-setting label {
-    display: block;
-    margin-bottom: 0.5rem;
-    margin-top: 1rem;
-    color: #374151;
-    font-weight: 500;
-  }
-
-  .country-war-setting label:first-child {
     margin-top: 0;
   }
 
