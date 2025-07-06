@@ -1,3 +1,4 @@
+import { debugLog, debugError } from '../config/debug';
 import type { GameMessage, PlayerInfo, Player, GameSettings } from '../types/core';
 import { PeerConnection } from './PeerConnection';
 import { sanitizePlayerName } from '../utils/sanitizer';
@@ -28,7 +29,7 @@ export class GameManager {
 
   // Method to reset to initial state (for returning to main menu)
   resetToMainMenu(): void {
-    console.log('GameManager: Resetting to main menu');
+    debugLog('GameManager: Resetting to main menu');
     
     // Disconnect current connection
     if (this.peer) {
@@ -90,8 +91,8 @@ export class GameManager {
 
   setGameSettings(settings: Partial<GameSettings>): void {
     this.gameSettings = { ...this.gameSettings, ...settings };
-    console.log('GameManager: setGameSettings called with:', settings);
-    console.log('GameManager: Current gameSettings after update:', this.gameSettings);
+    debugLog('GameManager: setGameSettings called with:', settings);
+    debugLog('GameManager: Current gameSettings after update:', this.gameSettings);
     this.onStateChange?.();
   }
 
@@ -111,7 +112,7 @@ export class GameManager {
       this.myColor = 'red';
       this.myPlayerInfo = { ...this.myPlayerInfo, id: 'host', color: 'red' };
     } catch (error) {
-      console.error('Error creating room:', error);
+      debugError('Error creating room:', error);
       this.errorMessage = 'Failed to create room: ' + (error.message || 'Unknown error');
     } finally {
       this.connecting = false;
@@ -136,7 +137,7 @@ export class GameManager {
       this.myColor = 'blue';
       this.myPlayerInfo = { ...this.myPlayerInfo, id: 'joiner', color: 'blue' };
     } catch (error) {
-      console.error('Error joining room:', error);
+      debugError('Error joining room:', error);
       this.errorMessage = 'Failed to join room: ' + (error.message || 'Unknown error');
     } finally {
       this.connecting = false;
@@ -147,7 +148,7 @@ export class GameManager {
   startGame(): void {
     if (!this.peer || !this.connected || !this.isHost) return;
     
-    console.log('GameManager: startGame called with settings:', this.gameSettings);
+    debugLog('GameManager: startGame called with settings:', this.gameSettings);
     
     this.gameStarted = true;
     this.inPreLobby = false;
@@ -168,7 +169,7 @@ export class GameManager {
       }
     });
     
-    console.log('GameManager: Sent startGame message with settings:', this.gameSettings);
+    debugLog('GameManager: Sent startGame message with settings:', this.gameSettings);
     this.onStateChange?.();
   }
 
@@ -191,7 +192,7 @@ export class GameManager {
 
   private handleConnectionChange(isConnected: boolean): void {
     this.connected = isConnected;
-    console.log('GameManager: handleConnectionChange called with:', isConnected, 'isHost:', this.isHost);
+    debugLog('GameManager: handleConnectionChange called with:', isConnected, 'isHost:', this.isHost);
     if (!isConnected) {
       // When disconnected, reset game state but keep room/lobby state for host
       const wasHost = this.isHost;
@@ -221,10 +222,10 @@ export class GameManager {
       this.inPreLobby = true;
     } else if (isConnected && this.isHost) {
       this.inPreLobby = true;
-      console.log('GameManager: Host sending gameSettings to peer:', this.gameSettings);
+      debugLog('GameManager: Host sending gameSettings to peer:', this.gameSettings);
       setTimeout(() => {
         if (this.peer) {
-          console.log('GameManager: Host sent gameSettings:', this.gameSettings);
+          debugLog('GameManager: Host sent gameSettings:', this.gameSettings);
           this.peer.sendMessage({
             type: 'requestPlayerInfo',
             data: {}
@@ -236,7 +237,7 @@ export class GameManager {
   }
 
   private handleMessage(message: GameMessage): void {
-    console.log('GameManager: handleMessage called with:', message.type, message.data);
+    debugLog('GameManager: handleMessage called with:', message.type, message.data);
     switch (message.type) {
       case 'ping':
       case 'pong':
@@ -282,10 +283,10 @@ export class GameManager {
         break;
       case 'gameSettings':
         this.gameSettings = { ...message.data };
-        console.log('GameManager: Received gameSettings, updated to:', this.gameSettings);
+        debugLog('GameManager: Received gameSettings, updated to:', this.gameSettings);
         break;
       case 'startGame':
-        console.log('GameManager: Received startGame message');
+        debugLog('GameManager: Received startGame message');
         this.gameStarted = true;
         this.inPreLobby = false;
         // Forward the startGame message to App.svelte so it can initialize gameState

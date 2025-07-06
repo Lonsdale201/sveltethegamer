@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { debugLog } from '../../config/debug';
   import type { ColorDuelGameState, Player, Cell } from '../../types/colorDuel';
   import type { PlayerInfo } from '../../types/core';
   import { canMakeMove } from './ColorDuelLogic';
@@ -14,7 +15,7 @@
 
   // Reactive logging for props
   $: {
-    console.log('ColorDuelBoard reactive props update:', {
+    debugLog('ColorDuelBoard reactive props update:', {
       gameState: gameState ? {
         gameStarted: gameState.gameStarted,
         currentTurn: gameState.currentTurn,
@@ -32,7 +33,7 @@
 
   function handleCellClick(x: number, y: number) {
     const canMove = canMakeMove(gameState, x, y, myColor);
-    console.log('ColorDuelBoard handleCellClick:', {
+    debugLog('ColorDuelBoard handleCellClick:', {
       x,
       y,
       myColor,
@@ -46,10 +47,10 @@
     });
     
     if (canMakeMove(gameState, x, y, myColor)) {
-      console.log('ColorDuelBoard dispatching move event:', { x, y });
+      debugLog('ColorDuelBoard dispatching move event:', { x, y });
       dispatch('move', { x, y });
     } else {
-      console.log('ColorDuelBoard move blocked - canMakeMove returned false');
+      debugLog('ColorDuelBoard move blocked - canMakeMove returned false');
     }
   }
 
@@ -113,11 +114,30 @@
         </div>
       </div>
       <div class="player-info">
-        {#if gameState.stolen[myColor]}
-          <div class="steal-status">Steal used ✓</div>
-        {:else}
-          <div class="steal-status">Steal available</div>
-        {/if}
+        <div class="steal-container">
+          <div class="steal-header">
+            <span class="steal-icon">🎯</span>
+            <span class="steal-title">Steal Power</span>
+          </div>
+          {#if gameState.stolen[myColor]}
+            <div class="steal-status used">
+              <span class="status-icon">❌</span>
+              <span class="status-text">Used</span>
+            </div>
+          {:else}
+            <div class="steal-status available">
+              <span class="status-icon">✨</span>
+              <span class="status-text">Available</span>
+            </div>
+          {/if}
+          <div class="steal-description">
+            {#if gameState.stolen[myColor]}
+              You've already used your steal ability
+            {:else}
+              Click opponent's cell to steal it!
+            {/if}
+          </div>
+        </div>
       </div>
     {/if}
   </div>
@@ -251,7 +271,71 @@
 
   .steal-status {
     font-size: 0.9rem;
-    color: #666;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    min-width: 120px;
+  }
+
+  .steal-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e5e7eb;
+  }
+
+  .steal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .steal-icon {
+    font-size: 1.2rem;
+  }
+
+  .steal-title {
+    font-weight: bold;
+    color: #333;
+    font-size: 1rem;
+  }
+
+  .steal-status.available {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: 2px solid #059669;
+    animation: pulse-available 2s infinite;
+  }
+
+  .steal-status.used {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: 2px solid #dc2626;
+    opacity: 0.8;
+  }
+
+  .status-icon {
+    font-size: 1rem;
+  }
+
+  .status-text {
+    font-weight: bold;
+  }
+
+  .steal-description {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+    font-style: italic;
   }
 
   .board {

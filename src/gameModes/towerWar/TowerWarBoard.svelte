@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { debugLog } from '../../config/debug';
   import type { TowerWarGameState, TowerWarAction, Player } from '../../types/towerWar';
   import type { PlayerInfo, GameSettings } from '../../types/core';
   import { canMakeAction } from './TowerWarLogic';
@@ -14,13 +15,13 @@
   const dispatch = createEventDispatcher();
 
   function handleAction(action: TowerWarAction) {
-    console.log('TowerWar handleAction:', { action, myColor, canMake: canMakeAction(gameState, action, myColor) });
+    debugLog('TowerWar handleAction:', { action, myColor, canMake: canMakeAction(gameState, action, myColor) });
     
     if (canMakeAction(gameState, action, myColor)) {
-      console.log('TowerWar dispatching action:', action);
+      debugLog('TowerWar dispatching action:', action);
       dispatch('move', { action });
     } else {
-      console.log('TowerWar action blocked:', action);
+      debugLog('TowerWar action blocked:', action);
     }
   }
 

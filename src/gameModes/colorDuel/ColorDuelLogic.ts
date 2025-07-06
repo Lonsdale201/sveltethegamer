@@ -1,3 +1,4 @@
+import { debugLog } from '../../config/debug';
 import type { ColorDuelGameState, Cell, Player, MoveData } from '../../types/colorDuel';
 import type { GameSettings } from '../../types/core';
 
@@ -28,43 +29,43 @@ export function checkWinner(board: Cell[][]): Player | null {
 }
 
 export function canMakeMove(gameState: ColorDuelGameState, x: number, y: number, player: Player): boolean {
-  console.log('canMakeMove: Called with:', { gameState, x, y, player });
-  console.log('canMakeMove: Checking conditions:');
-  console.log('  gameState.winner:', gameState.winner);
-  console.log('  gameState.gameStarted:', gameState.gameStarted);
-  console.log('  gameState.currentTurn:', gameState.currentTurn);
-  console.log('  player:', player);
+  debugLog('canMakeMove: Called with:', { gameState, x, y, player });
+  debugLog('canMakeMove: Checking conditions:');
+  debugLog('  gameState.winner:', gameState.winner);
+  debugLog('  gameState.gameStarted:', gameState.gameStarted);
+  debugLog('  gameState.currentTurn:', gameState.currentTurn);
+  debugLog('  player:', player);
   
   if (gameState.winner || !gameState.gameStarted) return false;
   if (gameState.currentTurn !== player) return false;
 
   const cell = gameState.board[x][y];
-  console.log('  cell at [' + x + ',' + y + ']:', cell);
-  console.log('  player stolen status:', gameState.stolen[player]);
+  debugLog('  cell at [' + x + ',' + y + ']:', cell);
+  debugLog('  player stolen status:', gameState.stolen[player]);
   
   // Can place on empty cell
   if (cell === 'empty') {
-    console.log('canMakeMove: Allowing move on empty cell');
+    debugLog('canMakeMove: Allowing move on empty cell');
     return true;
   }
   
   // Can steal opponent's cell if haven't stolen yet
   if (cell !== player && !gameState.stolen[player]) {
-    console.log('canMakeMove: Allowing steal move');
+    debugLog('canMakeMove: Allowing steal move');
     return true;
   }
   
-  console.log('canMakeMove: Move not allowed');
+  debugLog('canMakeMove: Move not allowed');
   return false;
 }
 
 export function makeMove(gameState: ColorDuelGameState, x: number, y: number, player: Player): ColorDuelGameState {
   if (!canMakeMove(gameState, x, y, player)) {
-    console.log('makeMove: Invalid move attempted by', player, 'at', x, y);
+    debugLog('makeMove: Invalid move attempted by', player, 'at', x, y);
     return gameState;
   }
 
-  console.log('makeMove: Valid move by', player, 'at', x, y);
+  debugLog('makeMove: Valid move by', player, 'at', x, y);
   
   const newState = { ...gameState };
   newState.board = gameState.board.map(row => [...row]);

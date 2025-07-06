@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { debugLog, debugError } from './config/debug';
   import Granim from 'granim';
   import Lobby from './components/Lobby.svelte';
   import PreLobby from './components/PreLobby.svelte';
@@ -9,10 +10,9 @@
   import type { GameMessage, Player } from './types/core';
   import type { ColorDuelGameState, MoveData } from './types/colorDuel';
   import type { TowerWarGameState, TowerWarMoveData } from './types/towerWar';
-  import type { CountryWarGameState, CountryWarMoveData } from './types/countryWar';
 
   let gameManager: GameManager | null = null;
-  let gameState: ColorDuelGameState | TowerWarGameState | CountryWarGameState;
+  let gameState: ColorDuelGameState | TowerWarGameState;
   let gradientCanvas: HTMLCanvasElement;
   let granim: any;
   let turnTimer: number | null = null;
@@ -30,7 +30,7 @@
 
   // Reactive logging for main state variables
   $: {
-    console.log('App reactive state update:', {
+    debugLog('App reactive state update:', {
       connected,
       gameStarted,
       inPreLobby,
@@ -44,7 +44,7 @@
 
   // Reactive logging for gameState changes
   $: if (gameState) {
-    console.log('App gameState update:', {
+    debugLog('App gameState update:', {
       gameStarted: gameState.gameStarted,
       currentTurn: gameState.currentTurn,
       winner: gameState.winner,
@@ -123,20 +123,20 @@
   function handleGameMessage(message: GameMessage) {
     if (!currentGameMode) return;
 
-    console.log('App handleGameMessage:', message.type, message.data);
+    debugLog('App handleGameMessage:', message.type, message.data);
 
     switch (message.type) {
       case 'gameState':
-        console.log('App handleGameMessage gameState - before update:', gameState);
+        debugLog('App handleGameMessage gameState - before update:', gameState);
         gameState = message.data;
-        console.log('App handleGameMessage gameState - after update:', gameState);
+        debugLog('App handleGameMessage gameState - after update:', gameState);
         if (gameState.gameStarted && !gameState.winner) {
           startTurnTimer();
         }
         break;
       case 'move':
-        console.log('App handleGameMessage move - received data:', message.data);
-        console.log('App handleGameMessage move - gameState before makeMove:', gameState);
+        debugLog('App handleGameMessage move - received data:', message.data);
+        debugLog('App handleGameMessage move - gameState before makeMove:', gameState);
         
         if (gameSettings.gameMode === 'color-duel') {
           const moveData: MoveData = message.data;
@@ -144,12 +144,9 @@
         } else if (gameSettings.gameMode === 'tower-war') {
           const moveData: TowerWarMoveData = message.data;
           gameState = currentGameMode.gameLogic.makeMove(gameState, moveData.action, moveData.player);
-        } else if (gameSettings.gameMode === 'country-war') {
-          const moveData: CountryWarMoveData = message.data;
-          gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
         }
         
-        console.log('App handleGameMessage move - gameState after makeMove:', gameState);
+        debugLog('App handleGameMessage move - gameState after makeMove:', gameState);
         startTurnTimer();
         break;
       case 'reset':
@@ -161,11 +158,11 @@
         startTurnTimer();
         break;
       case 'startGame':
-        console.log('App: Starting game with settings:', gameSettings);
+        debugLog('App: Starting game with settings:', gameSettings);
         // Initialize game state when receiving startGame message
         if (currentGameMode) {
           gameState = currentGameMode.gameLogic.resetGame(gameSettings);
-          console.log('App: Game state initialized for non-host:', gameState);
+          debugLog('App: Game state initialized for non-host:', gameState);
         }
         startTurnTimer();
         break;
@@ -203,20 +200,6 @@
           data: { action, player: myColor }
         });
       }
-    } else if (gameSettings.gameMode === 'country-war') {
-      const moveData = event.detail;
-      const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
-      
-      if (newGameState !== gameState) {
-        gameState = newGameState;
-        startTurnTimer();
-        
-        // Send move to peer
-        gameManager.sendMessage({
-          type: 'move',
-          data: moveData
-        });
-      }
     }
   }
 
@@ -236,7 +219,7 @@
   function handleMainMenu() {
     if (!gameManager) return;
     
-    console.log('App: Returning to main menu');
+    debugLog('App: Returning to main menu');
     gameManager.resetToMainMenu();
   }
 

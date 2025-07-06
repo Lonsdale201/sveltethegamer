@@ -1,13 +1,10 @@
 import type { GameMode } from '../types/core';
 import ColorDuelBoard from './colorDuel/ColorDuelBoard.svelte';
 import TowerWarBoard from './towerWar/TowerWarBoard.svelte';
-import CountryWarBoard from './countryWar/CountryWarBoard.svelte';
 import * as ColorDuelLogic from './colorDuel/ColorDuelLogic';
 import * as TowerWarLogic from './towerWar/TowerWarLogic';
-import * as CountryWarLogic from './countryWar/CountryWarLogic';
 import { initialColorDuelGameState } from '../types/colorDuel';
 import { initialTowerWarGameState } from '../types/towerWar';
-import { initialCountryWarGameState } from '../types/countryWar';
 
 export const gameModes: GameMode[] = [
   {
@@ -42,31 +39,6 @@ export const gameModes: GameMode[] = [
         label: 'Max Attacks',
         getValue: (settings) => `${settings.towerWarSettings?.maxAttacks ?? 10} per player`,
         icon: '💥'
-      }
-    }
-  },
-  {
-    id: 'country-war',
-    name: 'Country War',
-    description: 'Strategic territory conquest with base building and army movement',
-    component: CountryWarBoard,
-    initialState: () => ({ ...initialCountryWarGameState }),
-    gameLogic: CountryWarLogic,
-    settingsDisplay: {
-      turnTimer: {
-        label: 'Turn Timer',
-        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
-        icon: '⏱️'
-      },
-      initialBaseValue: {
-        label: 'Starting Army',
-        getValue: (settings) => `${settings.countryWarSettings?.initialBaseValue ?? 5} units per base`,
-        icon: '🏰'
-      },
-      buildCost: {
-        label: 'Build Cost',
-        getValue: (settings) => `${settings.countryWarSettings?.buildCost ?? 10} army units`,
-        icon: '🏗️'
       }
     }
   }

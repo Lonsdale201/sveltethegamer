@@ -14,8 +14,6 @@
   let turnTimeLimit = 0;
   let selectedGameMode = 'color-duel';
   let maxTowerWarAttacks = 10;
-  let initialCountryWarBaseValue = 5;
-  let countryWarBuildCost = 10;
   let activeTab = 'color-duel';
   let nameInputFocused = false;
 
@@ -47,14 +45,6 @@
     if (selectedGameMode === 'tower-war') {
       settings.towerWarSettings = {
         maxAttacks: maxTowerWarAttacks
-      };
-    }
-    
-    // Add Country War specific settings if that mode is selected
-    if (selectedGameMode === 'country-war') {
-      settings.countryWarSettings = {
-        initialBaseValue: initialCountryWarBaseValue,
-        buildCost: countryWarBuildCost
       };
     }
     
@@ -246,40 +236,6 @@
         </div>
       {/if}
       
-      {#if selectedGameMode === 'country-war'}
-        <div class="country-war-setting">
-          <label for="initialBaseValue">Starting base value:</label>
-          <input 
-            id="initialBaseValue"
-            type="number" 
-            bind:value={initialCountryWarBaseValue}
-            min="1"
-            max="20"
-            step="1"
-            class="timer-input"
-            placeholder="5"
-          />
-          <p class="setting-description">
-            Each player starts with bases containing {initialCountryWarBaseValue} army units
-          </p>
-          
-          <label for="buildCost">Base building cost:</label>
-          <input 
-            id="buildCost"
-            type="number" 
-            bind:value={countryWarBuildCost}
-            min="5"
-            max="50"
-            step="5"
-            class="timer-input"
-            placeholder="10"
-          />
-          <p class="setting-description">
-            Cost {countryWarBuildCost} army units to build a new base
-          </p>
-        </div>
-      {/if}
-      
       <button 
         on:click={handleCreateRoom} 
         disabled={connecting || showNameInput}
@@ -324,13 +280,6 @@
           on:click={() => activeTab = 'tower-war'}
         >
           🏗️ Tower War
-        </button>
-        <button 
-          class="tab-btn" 
-          class:active={activeTab === 'country-war'}
-          on:click={() => activeTab = 'country-war'}
-        >
-          🗺️ Country War
         </button>
         <button 
           class="tab-btn" 
@@ -420,72 +369,6 @@
               <li>Use your 10 attacks wisely - they're limited!</li>
               <li>Use defense strategically when expecting attacks</li>
               <li>Sometimes attacking is better than building</li>
-            </ul>
-          </div>
-        </div>
-      {:else if activeTab === 'country-war'}
-        <div class="game-rules">
-          <h4>🗺️ Country War</h4>
-          <p class="game-description">
-            Strategic territory conquest game. Build bases, move armies, and dominate the battlefield through tactical warfare.
-          </p>
-          
-          <div class="rules-section">
-            <h5>🎮 How to Play</h5>
-            <ul>
-              <li><strong>Goal:</strong> Control 5+ territories OR eliminate all enemy bases</li>
-              <li><strong>Map:</strong> 8 territories connected by strategic pathways</li>
-              <li><strong>Starting:</strong> Each player begins with 1 territory and base</li>
-              <li><strong>Turn Order:</strong> Red player goes first, then alternating</li>
-            </ul>
-          </div>
-          
-          <div class="rules-section">
-            <h5>⚔️ Actions</h5>
-            <ul>
-              <li><strong>🏗️ Build Base:</strong> Create a new base (costs 10 army units, requires 10+ units)</li>
-              <li><strong>⚔️ Move Army:</strong> Attack enemies or reinforce allies (leave 1 unit behind)</li>
-              <li><strong>🔄 Merge Bases:</strong> Combine two of your bases into one stronger base</li>
-            </ul>
-          </div>
-          
-          <div class="rules-section">
-            <h5>🏰 Base Mechanics</h5>
-            <ul>
-              <li><strong>Growth:</strong> Bases generate +1 army unit each turn</li>
-              <li><strong>Defense:</strong> Bases provide strategic control points</li>
-              <li><strong>Building:</strong> Requires 10+ units, costs 10 units to build</li>
-              <li><strong>Merging:</strong> Combine adjacent bases for concentrated power</li>
-            </ul>
-          </div>
-          
-          <div class="rules-section">
-            <h5>🎯 Combat System</h5>
-            <ul>
-              <li><strong>Attack:</strong> Send armies to enemy territories</li>
-              <li><strong>Victory:</strong> If your army > enemy army, you conquer the territory</li>
-              <li><strong>Defeat:</strong> Enemy loses army units equal to your attack force</li>
-              <li><strong>Connections:</strong> Can only move between connected territories</li>
-            </ul>
-          </div>
-          
-          <div class="rules-section">
-            <h5>🏆 Winning Conditions</h5>
-            <ul>
-              <li><strong>Territorial:</strong> Control 5 or more territories</li>
-              <li><strong>Elimination:</strong> Destroy all enemy bases</li>
-              <li><strong>Strategy:</strong> Balance expansion, defense, and resource management</li>
-            </ul>
-          </div>
-          
-          <div class="rules-section">
-            <h5>💡 Pro Tips</h5>
-            <ul>
-              <li>Build bases early to increase army production</li>
-              <li>Control central territories for strategic advantage</li>
-              <li>Use merge to create powerful strongholds</li>
-              <li>Always leave 1 unit when moving armies</li>
-              <li>Plan multiple routes to avoid being blocked</li>
             </ul>
           </div>
         </div>

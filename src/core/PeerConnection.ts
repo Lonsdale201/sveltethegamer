@@ -1,3 +1,4 @@
+import { debugLog, debugError, debugWarn } from '../config/debug';
 import Peer from 'peerjs';
 import type { GameMessage } from '../types/core';
 
@@ -33,18 +34,18 @@ export class PeerConnection {
         });
 
         this.peer.on('open', (id) => {
-          console.log('Host peer opened with ID:', id);
+          debugLog('Host peer opened with ID:', id);
           resolve(id);
         });
 
         this.peer.on('connection', (conn) => {
-          console.log('Incoming connection from:', conn.peer);
+          debugLog('Incoming connection from:', conn.peer);
           this.connection = conn;
           this.setupConnection();
         });
 
         this.peer.on('error', (error) => {
-          console.error('Peer error:', error);
+          debugError('Peer error:', error);
           reject(error);
         });
 
@@ -55,7 +56,7 @@ export class PeerConnection {
         }, 10000);
 
       } catch (error) {
-        console.error('Error creating peer:', error);
+        debugError('Error creating peer:', error);
         reject(error);
       }
     });
@@ -88,7 +89,7 @@ export class PeerConnection {
         });
 
         this.peer.on('open', (id) => {
-          console.log('Joiner peer opened with ID:', id);
+          debugLog('Joiner peer opened with ID:', id);
           
           this.connection = this.peer!.connect(roomId.toUpperCase(), {
             reliable: true
@@ -97,13 +98,13 @@ export class PeerConnection {
           this.setupConnection();
           
           this.connection.on('open', () => {
-            console.log('Connected to host');
+            debugLog('Connected to host');
             resolve();
           });
         });
 
         this.peer.on('error', (error) => {
-          console.error('Peer error:', error);
+          debugError('Peer error:', error);
           reject(error);
         });
 
@@ -123,7 +124,7 @@ export class PeerConnection {
     if (!this.connection) return;
 
     this.connection.on('open', () => {
-      console.log('Connection established');
+      debugLog('Connection established');
       this.connected = true;
       this.onConnectionChange?.(true);
       
@@ -131,22 +132,22 @@ export class PeerConnection {
       this.startHeartbeat();
       
       if (!this.isHost) {
-        console.log('Joiner sending playerJoined message');
+        debugLog('Joiner sending playerJoined message');
         this.sendMessage({ type: 'playerJoined', data: {} });
       }
     });
 
     this.connection.on('data', (data: any) => {
       try {
-        console.log('Peer received data:', data.type, data.data);
+        debugLog('Peer received data:', data.type, data.data);
         
         // Handle heartbeat messages internally
         if (data.type === 'ping') {
-          console.log('Received ping, sending pong');
+          debugLog('Received ping, sending pong');
           this.sendMessage({ type: 'pong', data: {} });
           this.resetHeartbeatTimeout();
         } else if (data.type === 'pong') {
-          console.log('Received pong');
+          debugLog('Received pong');
           this.resetHeartbeatTimeout();
         } else {
           // Reset heartbeat timeout for any message
@@ -155,18 +156,18 @@ export class PeerConnection {
           this.onMessage?.(data);
         }
       } catch (error) {
-        console.error('Error parsing message:', error);
+        debugError('Error parsing message:', error);
       }
     });
 
     this.connection.on('close', () => {
-      console.log('Connection closed');
+      debugLog('Connection closed');
       this.connected = false;
       this.onConnectionChange?.(false);
     });
 
     this.connection.on('error', (error: any) => {
-      console.error('Connection error:', error);
+      debugError('Connection error:', error);
       this.connected = false;
       this.onConnectionChange?.(false);
       this.stopHeartbeat();
@@ -174,7 +175,7 @@ export class PeerConnection {
   }
 
   private startHeartbeat(): void {
-    console.log('Starting heartbeat mechanism');
+    debugLog('Starting heartbeat mechanism');
     
     // Clear any existing heartbeat timers
     this.stopHeartbeat();
@@ -182,7 +183,7 @@ export class PeerConnection {
     // Start sending ping messages regularly
     this.heartbeatIntervalId = setInterval(() => {
       if (this.connected && this.connection) {
-        console.log('Sending heartbeat ping');
+        debugLog('Sending heartbeat ping');
         this.sendMessage({ type: 'ping', data: {} });
       }
     }, this.HEARTBEAT_INTERVAL);
@@ -204,7 +205,7 @@ export class PeerConnection {
   }
 
   private handleHeartbeatTimeout(): void {
-    console.log('Heartbeat timeout - connection appears to be lost');
+    debugLog('Heartbeat timeout - connection appears to be lost');
     
     // Stop heartbeat to prevent further timeouts
     this.stopHeartbeat();
@@ -228,13 +229,13 @@ export class PeerConnection {
   public sendMessage = (message: GameMessage): void => {
     if (this.connection && this.connected) {
       try {
-        console.log('Peer sending message:', message.type, message.data);
+        debugLog('Peer sending message:', message.type, message.data);
         this.connection.send(message);
       } catch (error) {
-        console.error('Error sending message:', error);
+        debugError('Error sending message:', error);
       }
     } else {
-      console.warn('Cannot send message - not connected:', message.type);
+      debugWarn('Cannot send message - not connected:', message.type);
     }
   };
 
@@ -247,7 +248,7 @@ export class PeerConnection {
   };
 
   public disconnect = (): void => {
-    console.log('Disconnecting peer connection');
+    debugLog('Disconnecting peer connection');
     
     // Stop heartbeat mechanism
     this.stopHeartbeat();
@@ -256,7 +257,7 @@ export class PeerConnection {
       try {
         this.connection.close();
       } catch (error) {
-        console.error('Error closing connection:', error);
+        debugError('Error closing connection:', error);
       }
       this.connection = null;
     }
@@ -265,7 +266,7 @@ export class PeerConnection {
       try {
         this.peer.destroy();
       } catch (error) {
-        console.error('Error destroying peer:', error);
+        debugError('Error destroying peer:', error);
       }
       this.peer = null;
     }

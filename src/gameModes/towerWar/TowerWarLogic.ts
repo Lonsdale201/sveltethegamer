@@ -1,3 +1,4 @@
+import { debugLog } from '../../config/debug';
 import type { TowerWarGameState, TowerWarAction, Player, TowerWarMoveData } from '../../types/towerWar';
 import type { GameSettings } from '../../types/core';
 
@@ -22,7 +23,7 @@ export function checkWinner(gameState: TowerWarGameState): Player | null {
 }
 
 export function canMakeAction(gameState: TowerWarGameState, action: TowerWarAction, player: Player): boolean {
-  console.log('TowerWar canMakeAction:', { action, player, gameState });
+  debugLog('TowerWar canMakeAction:', { action, player, gameState });
   
   if (gameState.winner || !gameState.gameStarted) return false;
   if (gameState.currentTurn !== player) return false;
@@ -43,11 +44,11 @@ export function canMakeAction(gameState: TowerWarGameState, action: TowerWarActi
 
 export function makeMove(gameState: TowerWarGameState, action: TowerWarAction, player: Player): TowerWarGameState {
   if (!canMakeAction(gameState, action, player)) {
-    console.log('TowerWar makeMove: Invalid action attempted by', player, 'action:', action);
+    debugLog('TowerWar makeMove: Invalid action attempted by', player, 'action:', action);
     return gameState;
   }
 
-  console.log('TowerWar makeMove: Valid action by', player, 'action:', action);
+  debugLog('TowerWar makeMove: Valid action by', player, 'action:', action);
   
   const newState = { ...gameState };
   newState.players = {
@@ -71,11 +72,11 @@ export function makeMove(gameState: TowerWarGameState, action: TowerWarAction, p
       if (opponentPlayer.defense) {
         // Defense blocks the attack
         opponentPlayer.defense = false;
-        console.log('TowerWar: Attack blocked by defense, attacks remaining:', currentPlayer.attacksRemaining);
+        debugLog('TowerWar: Attack blocked by defense, attacks remaining:', currentPlayer.attacksRemaining);
       } else {
         // Attack hits
         opponentPlayer.tower = Math.max(0, opponentPlayer.tower - 1);
-        console.log('TowerWar: Attack successful, opponent tower:', opponentPlayer.tower, 'attacks remaining:', currentPlayer.attacksRemaining);
+        debugLog('TowerWar: Attack successful, opponent tower:', opponentPlayer.tower, 'attacks remaining:', currentPlayer.attacksRemaining);
       }
       break;
       
@@ -91,7 +92,7 @@ export function makeMove(gameState: TowerWarGameState, action: TowerWarAction, p
   newState.timeRemaining = gameState.turnTimeLimit;
   newState.winner = checkWinner(newState);
   
-  console.log('TowerWar makeMove result:', newState);
+  debugLog('TowerWar makeMove result:', newState);
   return newState;
 }
 
