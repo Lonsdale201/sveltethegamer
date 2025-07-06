@@ -109,7 +109,12 @@
           url: shareUrl,
         });
       } catch (error) {
-        console.error('Error sharing:', error);
+        // Handle permission denied errors as warnings since they're expected
+        if (error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError')) {
+          console.warn('Share permission denied, falling back to clipboard:', error.message);
+        } else {
+          console.error('Error sharing:', error);
+        }
         // Fallback: copy to clipboard if sharing fails
         try {
           const shareText = `Join my Color Duel P2P Game! Room Code: ${roomCode}\n\nPlay at: ${window.location.origin}`;
