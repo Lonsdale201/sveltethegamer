@@ -29,6 +29,9 @@ export interface BrainstormingGameState extends BaseGameState {
   playerScores: Record<Player, number>;
   answersSubmitted: Record<Player, boolean>;
   questionStartTime: number;
+  showingFeedback: boolean;
+  feedbackStartTime: number;
+  feedbackTimeRemaining: number;
   gameSettings: {
     targetScore: number;
     language: Language;
@@ -49,6 +52,9 @@ export const initialBrainstormingGameState: BrainstormingGameState = {
   playerScores: { red: 0, blue: 0 },
   answersSubmitted: { red: false, blue: false },
   questionStartTime: 0,
+  showingFeedback: false,
+  feedbackStartTime: 0,
+  feedbackTimeRemaining: 0,
   gameSettings: {
     targetScore: 10,
     language: 'HU'

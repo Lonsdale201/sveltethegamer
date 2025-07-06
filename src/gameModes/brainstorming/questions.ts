@@ -33,7 +33,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 4,
     exactPoints: 2,
-    closePoints: 0 // Only exact answer gets points
+    closePoints: 1 // Close answers get 1 point
   },
   {
     id: 'hu-3',
@@ -42,7 +42,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 1848,
     exactPoints: 2,
-    closePoints: 0 // Only exact answer gets points
+    closePoints: 1 // Close answers get 1 point
   },
   {
     id: 'hu-4',
@@ -60,7 +60,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 96,
     exactPoints: 2,
-    closePoints: 0 // Only exact answer gets points
+    closePoints: 1 // Close answers get 1 point
   },
   {
     id: 'hu-6',
@@ -69,7 +69,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 1782,
     exactPoints: 2,
-    closePoints: 0
+    closePoints: 1
   },
   {
     id: 'hu-7',
@@ -87,7 +87,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 19,
     exactPoints: 2,
-    closePoints: 0
+    closePoints: 1
   },
   {
     id: 'hu-9',
@@ -127,7 +127,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 4,
     exactPoints: 2,
-    closePoints: 0 // Only exact answer gets points
+    closePoints: 1 // Close answers get 1 point
   },
   {
     id: 'en-3',
@@ -136,7 +136,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 1848,
     exactPoints: 2,
-    closePoints: 0 // Only exact answer gets points
+    closePoints: 1 // Close answers get 1 point
   },
   {
     id: 'en-4',
@@ -154,7 +154,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 96,
     exactPoints: 2,
-    closePoints: 0 // Only exact answer gets points
+    closePoints: 1 // Close answers get 1 point
   },
   {
     id: 'en-6',
@@ -163,7 +163,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 1782,
     exactPoints: 2,
-    closePoints: 0
+    closePoints: 1
   },
   {
     id: 'en-7',
@@ -181,7 +181,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 19,
     exactPoints: 2,
-    closePoints: 0
+    closePoints: 1
   },
   {
     id: 'en-9',

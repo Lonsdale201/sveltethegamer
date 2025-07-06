@@ -45,14 +45,11 @@ export function canMakeMove(gameState: BrainstormingGameState, moveData: Brainst
   
   if (gameState.winner || !gameState.gameStarted) return false;
   
-  // For simultaneous mode, check if player has already submitted
-  if (gameState.turnState?.mode === 'simultaneous') {
-    // Check if player has already answered current question
-    if (gameState.answersSubmitted[player]) return false;
-  } else {
-    // Use TurnManager for sequential mode
-    if (!TurnManager.canPlayerAct(gameState, player)) return false;
-  }
+  // Don't allow moves during feedback phase
+  if (gameState.showingFeedback) return false;
+  
+  // Check if player has already answered current question
+  if (gameState.answersSubmitted[player]) return false;
   
   // Check if question exists
   const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
@@ -89,28 +86,28 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
   };
   
   newState.playerAnswers[player].push(playerAnswer);
-  newState.playerScores[player] += points.points;
   newState.answersSubmitted[player] = true;
   
   // Check if both players have answered
   const bothAnswered = newState.answersSubmitted.red && newState.answersSubmitted.blue;
   
   if (bothAnswered) {
-    // Move to next question or end game
-    if (gameState.currentQuestionIndex < gameState.questions.length - 1) {
-      newState.currentQuestionIndex++;
-      newState.answersSubmitted = { red: false, blue: false };
-      newState.questionStartTime = Date.now();
-      newState.turnStartTime = Date.now();
-      newState.timeRemaining = gameState.turnTimeLimit;
-    } else {
-      // Game is ending
-      newState.turnStartTime = Date.now();
-      newState.timeRemaining = 0;
+    // Start feedback phase
+    newState.showingFeedback = true;
+    newState.feedbackStartTime = Date.now();
+    newState.feedbackTimeRemaining = 6; // 6 seconds feedback
+    
+    // Apply scores during feedback phase
+    for (const player of ['red', 'blue'] as Player[]) {
+      const playerAnswer = newState.playerAnswers[player].find(a => a.questionId === currentQuestion.id);
+      if (playerAnswer) {
+        newState.playerScores[player] += playerAnswer.points;
+      }
     }
+    
+    // Check for winner after applying scores
+    newState.winner = checkWinner(newState);
   }
-  
-  newState.winner = checkWinner(newState);
   
   return newState;
 }
@@ -135,12 +132,17 @@ function calculatePoints(answer: string | number, question: Question): { points:
       };
     }
     
-    // For number questions, award close points if available
+    // For number questions, award close points if available and answer is close
     if (question.closePoints && question.closePoints > 0) {
-      return {
-        points: question.closePoints,
-        isExact: false
-      };
+      const difference = Math.abs(numAnswer - correctAnswer);
+      const tolerance = Math.max(1, Math.floor(correctAnswer * 0.1)); // 10% tolerance or minimum 1
+      
+      if (difference <= tolerance) {
+        return {
+          points: question.closePoints,
+          isExact: false
+        };
+      }
     }
   }
   
@@ -161,6 +163,9 @@ export function resetGame(gameSettings: GameSettings): BrainstormingGameState {
     playerScores: { red: 0, blue: 0 },
     answersSubmitted: { red: false, blue: false },
     questionStartTime: now,
+    showingFeedback: false,
+    feedbackStartTime: 0,
+    feedbackTimeRemaining: 0,
     gameSettings: {
       targetScore,
       language
@@ -176,46 +181,77 @@ export function resetGame(gameSettings: GameSettings): BrainstormingGameState {
 }
 
 export function skipTurn(gameState: BrainstormingGameState): BrainstormingGameState {
-  return TurnManager.handleTurnTimeout(gameState, (state) => {
-    const newState = { ...state };
-    const now = Date.now();
+  const newState = { ...gameState };
+  const now = Date.now();
+  
+  // If in feedback phase, advance to next question
+  if (gameState.showingFeedback) {
+    newState.showingFeedback = false;
+    newState.feedbackStartTime = 0;
+    newState.feedbackTimeRemaining = 0;
     
-    // Handle timeout: mark players who haven't submitted as having submitted a "no answer" (0 points)
-    const currentQuestion = state.questions[state.currentQuestionIndex];
-    
-    if (currentQuestion) {
-      for (const player of ['red', 'blue'] as Player[]) {
-        if (!state.answersSubmitted[player]) {
-          // Create a timeout answer with 0 points
-          const timeoutAnswer: PlayerAnswer = {
-            questionId: currentQuestion.id,
-            answer: 'TIMEOUT',
-            points: 0,
-            isExact: false,
-            timestamp: now
-          };
-          
-          newState.playerAnswers = {
-            red: [...state.playerAnswers.red],
-            blue: [...state.playerAnswers.blue]
-          };
-          newState.answersSubmitted = { ...state.answersSubmitted };
-          
-          newState.playerAnswers[player].push(timeoutAnswer);
-          newState.answersSubmitted[player] = true;
-        }
-      }
-      
-      // Move to next question
-      if (state.currentQuestionIndex < state.questions.length - 1) {
-        newState.currentQuestionIndex++;
-        newState.answersSubmitted = { red: false, blue: false };
-        newState.questionStartTime = now;
-      }
+    // Move to next question
+    if (gameState.currentQuestionIndex < gameState.questions.length - 1) {
+      newState.currentQuestionIndex++;
+      newState.answersSubmitted = { red: false, blue: false };
+      newState.questionStartTime = now;
+      newState.turnStartTime = now;
+      newState.timeRemaining = gameState.turnTimeLimit;
     }
     
     newState.winner = checkWinner(newState);
-    
     return newState;
-  });
+  }
+  
+  // Handle timeout: mark players who haven't submitted as having submitted a "no answer" (0 points)
+  const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+  
+  if (currentQuestion) {
+    for (const player of ['red', 'blue'] as Player[]) {
+      if (!gameState.answersSubmitted[player]) {
+        // Create a timeout answer with 0 points
+        const timeoutAnswer: PlayerAnswer = {
+          questionId: currentQuestion.id,
+          answer: 'TIMEOUT',
+          points: 0,
+          isExact: false,
+          timestamp: now
+        };
+        
+        newState.playerAnswers = {
+          red: [...gameState.playerAnswers.red],
+          blue: [...gameState.playerAnswers.blue]
+        };
+        newState.answersSubmitted = { ...gameState.answersSubmitted };
+        
+        newState.playerAnswers[player].push(timeoutAnswer);
+        newState.answersSubmitted[player] = true;
+      }
+    }
+    
+    // Check if both players have now answered (including timeout)
+    if (newState.answersSubmitted.red && newState.answersSubmitted.blue) {
+      // Start feedback phase
+      newState.showingFeedback = true;
+      newState.feedbackStartTime = now;
+      newState.feedbackTimeRemaining = 6;
+      
+      // Apply scores
+      for (const player of ['red', 'blue'] as Player[]) {
+        const playerAnswer = newState.playerAnswers[player].find(a => a.questionId === currentQuestion.id);
+        if (playerAnswer) {
+          newState.playerScores[player] += playerAnswer.points;
+        }
+      }
+    }
+  }
+  
+  // Always switch turns to maintain GameManager's turn logic
+  newState.currentTurn = gameState.currentTurn === 'red' ? 'blue' : 'red';
+  newState.turnStartTime = now;
+  newState.timeRemaining = gameState.turnTimeLimit;
+  
+  newState.winner = checkWinner(newState);
+  
+  return newState;
 }

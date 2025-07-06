@@ -20,6 +20,7 @@
   let granim: any;
   let turnTimer: number | null = null;
   let currentGameMode: any = null;
+  let feedbackTimer: number | null = null;
 
   // Reactive state from GameManager
   $: isHost = gameManager?.getIsHost() || false;
@@ -119,6 +120,9 @@
     }
     if (turnTimer) {
       clearInterval(turnTimer);
+    }
+    if (feedbackTimer) {
+      clearInterval(feedbackTimer);
     }
   });
 
@@ -302,8 +306,14 @@
       turnTimer = null;
     }
 
-    // Don't start timer if game is over or unlimited time
-    if (!gameState.gameStarted || gameState.winner || gameState.turnTimeLimit === 0) {
+    // Don't start timer if game is over, unlimited time, or showing feedback
+    if (!gameState.gameStarted || gameState.winner || gameState.turnTimeLimit === 0 || gameState.showingFeedback) {
+      return;
+    }
+
+    // Handle feedback timer for brainstorming
+    if (gameSettings.gameMode === 'brainstorming' && gameState.showingFeedback) {
+      startFeedbackTimer();
       return;
     }
 
@@ -332,6 +342,54 @@
     }, 100); // Update every 100ms for smooth countdown
   }
 
+  function startFeedbackTimer() {
+    // Clear existing feedback timer
+    if (feedbackTimer) {
+      clearInterval(feedbackTimer);
+      feedbackTimer = null;
+    }
+
+    // Start feedback countdown timer
+    feedbackTimer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - gameState.feedbackStartTime) / 1000);
+      const newTimeRemaining = Math.max(0, 6 - elapsed);
+      
+      // Only update if time changed
+      if (newTimeRemaining !== gameState.feedbackTimeRemaining) {
+        gameState = { ...gameState, feedbackTimeRemaining: newTimeRemaining };
+      }
+
+      // Check if feedback time is up
+      if (newTimeRemaining <= 0) {
+        handleFeedbackTimeout();
+      }
+    }, 100);
+  }
+
+  function handleFeedbackTimeout() {
+    if (!gameManager || !connected) return;
+
+    // Clear feedback timer
+    if (feedbackTimer) {
+      clearInterval(feedbackTimer);
+      feedbackTimer = null;
+    }
+
+    // Handle feedback timeout (advance to next question)
+    gameState = currentGameMode.gameLogic.skipTurn(gameState);
+    
+    // Send timeout message to peer
+    gameManager.sendMessage({
+      type: 'turnTimeout',
+      data: {}
+    });
+
+    // Start timer for next turn if not showing feedback
+    if (!gameState.showingFeedback) {
+      startTurnTimer();
+    }
+  }
+
   function handleTurnTimeout() {
     if (!gameManager || !connected) return;
 
@@ -352,6 +410,14 @@
 
     // Start timer for next turn
     startTurnTimer();
+  }
+
+  // Watch for feedback state changes in brainstorming
+  $: if (gameSettings.gameMode === 'brainstorming' && gameState?.showingFeedback) {
+    startFeedbackTimer();
+  } else if (feedbackTimer && (!gameState?.showingFeedback || gameSettings.gameMode !== 'brainstorming')) {
+    clearInterval(feedbackTimer);
+    feedbackTimer = null;
   }
 </script>
 
