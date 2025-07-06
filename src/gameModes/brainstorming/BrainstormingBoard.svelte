@@ -34,11 +34,10 @@
   $: opponentColor = myColor === 'red' ? 'blue' : 'red';
   $: myScore = gameState.playerScores[myColor];
   $: opponentScore = gameState.playerScores[opponentColor];
-  $: hasAnswered = TurnManager.hasPlayerSubmitted(gameState, myColor);
-  $: opponentAnswered = TurnManager.hasPlayerSubmitted(gameState, opponentColor);
+  $: hasAnswered = gameState.answersSubmitted[myColor];
+  $: opponentAnswered = gameState.answersSubmitted[opponentColor];
   $: bothAnswered = hasAnswered && opponentAnswered;
   $: isLastQuestion = gameState.currentQuestionIndex >= gameState.questions.length - 1;
-  $: isWaitingForPlayers = TurnManager.isWaitingForPlayers(gameState);
 
   function handleSubmitAnswer() {
     if (!currentQuestion || hasAnswered) return;
@@ -59,12 +58,7 @@
       player: myColor
     };
 
-    // Check if we can make the move using TurnManager
-    if (!TurnManager.canPlayerAct(gameState, myColor)) {
-      debugLog('BrainstormingBoard: Cannot act - TurnManager blocked action');
-      return;
-    }
-
+    // Check if we can make the move
     debugLog('BrainstormingBoard dispatching answer:', moveData);
     dispatch('move', moveData);
     

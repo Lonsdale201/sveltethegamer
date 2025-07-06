@@ -33,11 +33,14 @@ export function canMakeMove(gameState: BrainstormingGameState, moveData: Brainst
   
   if (gameState.winner || !gameState.gameStarted) return false;
   
-  // Use TurnManager to check if player can act
-  if (!TurnManager.canPlayerAct(gameState, player)) return false;
-  
-  // Check if player has already answered current question
-  if (TurnManager.hasPlayerSubmitted(gameState, player)) return false;
+  // For simultaneous mode, check if player has already submitted
+  if (gameState.turnState?.mode === 'simultaneous') {
+    // Check if player has already answered current question
+    if (gameState.answersSubmitted[player]) return false;
+  } else {
+    // Use TurnManager for sequential mode
+    if (!TurnManager.canPlayerAct(gameState, player)) return false;
+  }
   
   // Check if question exists
   const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
@@ -47,53 +50,57 @@ export function canMakeMove(gameState: BrainstormingGameState, moveData: Brainst
 }
 
 export function makeMove(gameState: BrainstormingGameState, moveData: BrainstormingMoveData, player: Player): BrainstormingGameState {
-  return TurnManager.handlePlayerAction(gameState, player, (state) => {
-    if (!canMakeMove(state, moveData, player)) {
-      debugLog('Brainstorming makeMove: Invalid move attempted by', player, 'moveData:', moveData);
-      return state;
-    }
+  if (!canMakeMove(gameState, moveData, player)) {
+    debugLog('Brainstorming makeMove: Invalid move attempted by', player, 'moveData:', moveData);
+    return gameState;
+  }
 
-    debugLog('Brainstorming makeMove: Valid move by', player, 'moveData:', moveData);
-    
-    const newState = { ...state };
-    newState.playerAnswers = {
-      red: [...state.playerAnswers.red],
-      blue: [...state.playerAnswers.blue]
-    };
-    newState.playerScores = { ...state.playerScores };
-    newState.answersSubmitted = { ...state.answersSubmitted };
-    
-    const currentQuestion = state.questions[state.currentQuestionIndex];
-    const points = calculatePoints(moveData.answer, currentQuestion);
-    
-    const playerAnswer: PlayerAnswer = {
-      questionId: moveData.questionId,
-      answer: moveData.answer,
-      points: points.points,
-      isExact: points.isExact,
-      timestamp: Date.now()
-    };
-    
-    newState.playerAnswers[player].push(playerAnswer);
-    newState.playerScores[player] += points.points;
-    newState.answersSubmitted[player] = true;
-    
-    // Check if both players have answered (handled by TurnManager)
-    const bothAnswered = newState.turnState?.actionsSubmitted.red && newState.turnState?.actionsSubmitted.blue;
-    
-    if (bothAnswered) {
-      // Move to next question or end game
-      if (state.currentQuestionIndex < state.questions.length - 1) {
-        newState.currentQuestionIndex++;
-        newState.answersSubmitted = { red: false, blue: false };
-        newState.questionStartTime = Date.now();
-      }
+  debugLog('Brainstorming makeMove: Valid move by', player, 'moveData:', moveData);
+  
+  const newState = { ...gameState };
+  newState.playerAnswers = {
+    red: [...gameState.playerAnswers.red],
+    blue: [...gameState.playerAnswers.blue]
+  };
+  newState.playerScores = { ...gameState.playerScores };
+  newState.answersSubmitted = { ...gameState.answersSubmitted };
+  
+  const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+  const points = calculatePoints(moveData.answer, currentQuestion);
+  
+  const playerAnswer: PlayerAnswer = {
+    questionId: moveData.questionId,
+    answer: moveData.answer,
+    points: points.points,
+    isExact: points.isExact,
+    timestamp: Date.now()
+  };
+  
+  newState.playerAnswers[player].push(playerAnswer);
+  newState.playerScores[player] += points.points;
+  newState.answersSubmitted[player] = true;
+  
+  // Check if both players have answered
+  const bothAnswered = newState.answersSubmitted.red && newState.answersSubmitted.blue;
+  
+  if (bothAnswered) {
+    // Move to next question or end game
+    if (gameState.currentQuestionIndex < gameState.questions.length - 1) {
+      newState.currentQuestionIndex++;
+      newState.answersSubmitted = { red: false, blue: false };
+      newState.questionStartTime = Date.now();
+      newState.turnStartTime = Date.now();
+      newState.timeRemaining = gameState.turnTimeLimit;
+    } else {
+      // Game is ending
+      newState.turnStartTime = Date.now();
+      newState.timeRemaining = 0;
     }
-    
-    newState.winner = checkWinner(newState);
-    
-    return newState;
-  });
+  }
+  
+  newState.winner = checkWinner(newState);
+  
+  return newState;
 }
 
 function calculatePoints(answer: string | number, question: Question): { points: number; isExact: boolean } {
