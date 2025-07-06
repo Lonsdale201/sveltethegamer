@@ -3,7 +3,7 @@
  * Set DEBUG_MODE to true to enable console logging throughout the application
  * Set DEBUG_MODE to false to disable all debug output for production
  */
-export const DEBUG_MODE = true;
+export const DEBUG_MODE = false;
 
 /**
  * Debug logger that respects the global DEBUG_MODE setting
