@@ -8,16 +8,26 @@ A real-time multiplayer game platform built with Svelte, TypeScript, and PeerJS.
 - **Objective**: Get 3 colors in a row on a 3x3 grid
 - **Special Mechanic**: Each player can steal one opponent cell per game
 - **Strategy**: Balance offense and defense while timing your steal ability
+- **Turn Mode**: Sequential (traditional turn-based)
 
 ### Tower War
 - **Objective**: Build your tower to 10 levels OR destroy opponent's tower
 - **Actions**: Build (+1 level), Attack (-1 enemy level), Defend (block next attack)
 - **Limits**: Need 3+ levels to attack, configurable max attacks per game
+- **Turn Mode**: Sequential (traditional turn-based)
 
 ### Shadow Code
 - **Objective**: Crack your opponent's secret 3-digit code before they crack yours
-- **Gameplay**: Take turns guessing codes and receive feedback clues
+- **Gameplay**: Take turns making guesses and receive feedback clues
 - **Feedback**: Exact matches (🔵), partial matches (🟡), no matches (❌)
+- **Turn Mode**: Sequential (traditional turn-based)
+
+### Brainstorming
+- **Objective**: Test your knowledge in a fast-paced quiz battle
+- **Languages**: Hungarian 🇭🇺 and English 🇬🇧 questions available
+- **Question Types**: Multiple choice and number input questions
+- **Scoring**: Points for correct answers, bonus for exact number matches
+- **Turn Mode**: Simultaneous (both players answer at the same time)
 
 ## 🚀 Quick Start
 
@@ -73,14 +83,18 @@ src/
 │   └── debug.ts        # Debug logging system
 ├── core/               # Core game management
 │   ├── GameManager.ts  # Main game state management
-│   └── PeerConnection.ts # WebRTC peer-to-peer connection
+│   ├── PeerConnection.ts # WebRTC peer-to-peer connection
+│   └── TurnManager.ts  # Turn management system
 ├── gameModes/          # Game mode implementations
 │   ├── index.ts        # Game mode registry
 │   ├── colorDuel/      # Color Duel game mode
 │   ├── towerWar/       # Tower War game mode
-│   └── shadowCode/     # Shadow Code game mode
+│   ├── shadowCode/     # Shadow Code game mode
+│   └── brainstorming/  # Brainstorming quiz game mode
 ├── types/              # TypeScript type definitions
 ├── utils/              # Utility functions
+│   ├── sanitizer.ts    # Input sanitization
+│   └── storage.ts      # localStorage utilities
 └── main.ts            # Application entry point
 ```
 
@@ -94,6 +108,7 @@ src/
   - Game settings management
   - Message routing between components
   - Connection state management
+  - **Player name persistence**: Automatically saves and loads player names
 
 #### PeerConnection (`src/core/PeerConnection.ts`)
 - **Purpose**: WebRTC peer-to-peer communication with enhanced reliability
@@ -104,14 +119,80 @@ src/
   - Automatic reconnection detection
   - Error handling and connection lifecycle management
 
+#### TurnManager (`src/core/TurnManager.ts`)
+- **Purpose**: Flexible turn management system supporting multiple turn modes
+- **Turn Modes**:
+  - **Sequential**: Traditional turn-based gameplay (Color Duel, Tower War, Shadow Code)
+  - **Simultaneous**: Both players act at the same time (Brainstorming)
+- **Features**:
+  - Automatic turn switching
+  - Timeout handling
+  - Player action validation
+  - Waiting state management for simultaneous modes
+
 #### Game Mode System (`src/gameModes/`)
 - **Purpose**: Modular game implementations
 - **Structure**: Each game mode contains:
   - `*Board.svelte`: UI component for the game
   - `*Logic.ts`: Game rules and state management
   - Type definitions in `src/types/`
+  - Turn mode specification
 
 ## 🔧 New Developer Features
+
+### Player Name Persistence
+The application now automatically saves and loads player names using localStorage:
+
+```typescript
+import { savePlayerName, loadPlayerName, clearPlayerName } from '../utils/storage';
+
+// Save player name (automatically called when name is set)
+savePlayerName('PlayerName');
+
+// Load saved name (automatically called on app start)
+const savedName = loadPlayerName();
+
+// Clear saved name
+clearPlayerName();
+```
+
+**Features:**
+- **Automatic saving**: Names are saved as the user types
+- **Persistent across sessions**: Names are remembered between browser sessions
+- **Cross-tab synchronization**: Changes in one tab affect others
+- **Graceful fallback**: Works even if localStorage is unavailable
+
+### Turn Management System
+A flexible system that supports different turn modes:
+
+#### Sequential Mode (Traditional)
+Used by Color Duel, Tower War, and Shadow Code:
+```typescript
+// Players take turns one after another
+// Only the current player can make moves
+// Turn automatically switches after each action
+```
+
+#### Simultaneous Mode
+Used by Brainstorming:
+```typescript
+// Both players can act at the same time
+// Game waits for both players to submit actions
+// Automatic synchronization and feedback phases
+```
+
+#### Implementation Example
+```typescript
+// In game logic
+export function makeMove(gameState: GameState, moveData: any, player: Player): GameState {
+  return TurnManager.handlePlayerAction(gameState, player, (state) => {
+    // Your game-specific logic here
+    const newState = { ...state };
+    // Apply the move
+    return newState;
+  });
+}
+```
 
 ### Debug System (`src/config/debug.ts`)
 A centralized debug logging system that can be toggled globally:
@@ -149,10 +230,10 @@ settingsDisplay: {
     getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
     icon: '⏱️'
   },
-  maxAttacks: {
-    label: 'Max Attacks',
-    getValue: (settings) => `${settings.towerWarSettings?.maxAttacks ?? 10} per player`,
-    icon: '💥'
+  targetScore: {
+    label: 'Target Score',
+    getValue: (settings) => `${settings.brainstormingSettings?.targetScore ?? 10} points to win`,
+    icon: '🎯'
   }
 }
 ```
@@ -162,6 +243,74 @@ settingsDisplay: {
 - **Custom icons**: Each setting can have an emoji icon
 - **Dynamic values**: Settings display computed values based on current configuration
 - **Automatic UI**: PreLobby automatically renders all defined settings
+
+## 🧠 Brainstorming Game Mode
+
+### Question Management
+The Brainstorming mode includes a comprehensive question system:
+
+#### Adding New Questions
+Edit `src/gameModes/brainstorming/questions.ts`:
+
+```typescript
+// Hungarian Questions
+const hungarianQuestions: Question[] = [
+  {
+    id: 'hu-new',
+    text: 'Your question in Hungarian?',
+    type: 'select', // or 'number'
+    language: 'HU',
+    options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'], // for select type
+    correctAnswer: 'Option 1', // or number for number type
+    exactPoints: 1, // points for correct answer
+    closePoints: 1 // optional: points for close answer (number type only)
+  }
+];
+
+// English Questions
+const englishQuestions: Question[] = [
+  {
+    id: 'en-new',
+    text: 'Your question in English?',
+    type: 'number',
+    language: 'EN',
+    correctAnswer: 42,
+    exactPoints: 2,
+    closePoints: 1 // within 10% tolerance
+  }
+];
+```
+
+#### Question Types
+1. **Multiple Choice (`select`)**:
+   - 4 options provided
+   - 1 point for correct answer
+   - 0 points for wrong answer
+
+2. **Number Input (`number`)**:
+   - Exact answer gets full points
+   - Close answer (within 10% tolerance) gets partial points
+   - Wrong answer gets 0 points
+
+#### Question Randomization
+- **Session-based seed**: Questions are shuffled consistently for both players
+- **Hourly rotation**: Question order changes every hour but remains consistent during play
+- **Language-specific**: Each language has its own question pool
+
+#### Modifying Existing Questions
+1. Find the question by its `id` in the questions array
+2. Update any properties (text, options, correctAnswer, points)
+3. Ensure both Hungarian and English versions are updated if applicable
+
+#### Deleting Questions
+1. Remove the question object from the appropriate array
+2. Ensure the `id` is not referenced elsewhere
+3. Test that the game still works with the reduced question pool
+
+### Game Settings
+- **Target Score**: Set to 0 for "play all questions" mode, or any number for "first to X points"
+- **Language**: Choose between Hungarian (HU) and English (EN)
+- **Turn Timer**: Optional time limit per question
 
 ## 🎯 Adding New Game Modes
 
@@ -195,6 +344,7 @@ export const initialYourGameState: YourGameState = {
   turnTimeLimit: 0,
   turnStartTime: 0,
   timeRemaining: 0,
+  turnState: undefined, // Will be initialized by TurnManager
 };
 ```
 
@@ -203,6 +353,7 @@ Create `src/gameModes/yourGameMode/YourGameLogic.ts`:
 
 ```typescript
 import { debugLog } from '../../config/debug';
+import { TurnManager } from '../../core/TurnManager';
 import type { YourGameState, YourMoveData } from '../../types/yourGameMode';
 import type { GameSettings } from '../../types/core';
 
@@ -215,37 +366,51 @@ export function checkWinner(gameState: YourGameState): Player | null {
 // Validate if a move is legal
 export function canMakeMove(gameState: YourGameState, moveData: any, player: Player): boolean {
   debugLog('YourGame canMakeMove:', { moveData, player, gameState });
-  // Implement move validation
+  
+  // Use TurnManager for turn validation
+  if (!TurnManager.canPlayerAct(gameState, player)) {
+    return false;
+  }
+  
+  // Implement game-specific move validation
   return true;
 }
 
 // Execute a move and return new state
 export function makeMove(gameState: YourGameState, moveData: any, player: Player): YourGameState {
   debugLog('YourGame makeMove:', { moveData, player });
-  // Implement move execution
-  const newState = { ...gameState };
-  // Update game state based on move
-  return newState;
+  
+  // Use TurnManager to handle the move
+  return TurnManager.handlePlayerAction(gameState, player, (state) => {
+    // Implement your game-specific logic here
+    const newState = { ...state };
+    // Update game state based on move
+    newState.winner = checkWinner(newState);
+    return newState;
+  });
 }
 
 // Initialize game state
 export function resetGame(gameSettings: GameSettings): YourGameState {
-  // Return initial game state with settings applied
+  // Determine turn mode for your game
+  const turnMode = 'sequential'; // or 'simultaneous'
+  
   return {
     ...initialYourGameState,
     turnTimeLimit: gameSettings.turnTimeLimit,
     gameStarted: true,
+    turnState: TurnManager.initializeTurnState(turnMode),
   };
 }
 
 // Handle turn timeout
 export function skipTurn(gameState: YourGameState): YourGameState {
-  const newState = { ...gameState };
-  // Switch turns and update timing
-  newState.currentTurn = gameState.currentTurn === 'red' ? 'blue' : 'red';
-  newState.turnStartTime = Date.now();
-  newState.timeRemaining = gameState.turnTimeLimit;
-  return newState;
+  return TurnManager.handleTurnTimeout(gameState, (state) => {
+    // Handle timeout-specific logic (e.g., skip player's turn)
+    const newState = { ...state };
+    // Your timeout handling logic here
+    return newState;
+  });
 }
 ```
 
@@ -308,6 +473,7 @@ export const gameModes: GameMode[] = [
     component: YourGameBoard,
     initialState: () => ({ ...initialYourGameState }),
     gameLogic: YourGameLogic,
+    turnMode: 'sequential', // or 'simultaneous'
     settingsDisplay: {
       // Optional: Define settings that should appear in UI
       customSetting: {
@@ -318,6 +484,83 @@ export const gameModes: GameMode[] = [
     }
   }
 ];
+```
+
+## 🔄 Turn Management Patterns
+
+### Sequential Turn Pattern (Traditional)
+Perfect for games where players alternate moves:
+
+```typescript
+// Example: Color Duel, Tower War, Shadow Code
+export function makeMove(gameState: GameState, moveData: any, player: Player): GameState {
+  return TurnManager.handlePlayerAction(gameState, player, (state) => {
+    // Apply the move
+    const newState = { ...state };
+    newState.board[moveData.x][moveData.y] = player;
+    
+    // Check for winner
+    newState.winner = checkWinner(newState);
+    
+    return newState;
+    // TurnManager automatically switches turns
+  });
+}
+```
+
+### Simultaneous Turn Pattern
+Perfect for games where both players act at the same time:
+
+```typescript
+// Example: Brainstorming quiz
+export function makeMove(gameState: GameState, moveData: any, player: Player): GameState {
+  return TurnManager.handlePlayerAction(gameState, player, (state) => {
+    // Record player's action
+    const newState = { ...state };
+    newState.playerAnswers[player] = moveData.answer;
+    
+    // Check if both players have acted
+    const bothActed = newState.playerAnswers.red && newState.playerAnswers.blue;
+    
+    if (bothActed) {
+      // Process both actions together
+      newState.showingResults = true;
+      // TurnManager will reset for next round
+    }
+    
+    return newState;
+  });
+}
+```
+
+### Mixed Pattern (Setup + Gameplay)
+For games with different phases:
+
+```typescript
+// Example: Shadow Code (setup phase is simultaneous, guessing is sequential)
+export function makeMove(gameState: GameState, moveData: any, player: Player): GameState {
+  if (moveData.type === 'setCode') {
+    // Setup phase - simultaneous
+    return TurnManager.handlePlayerAction(gameState, player, (state) => {
+      const newState = { ...state };
+      newState.playerCodes[player] = moveData.code;
+      
+      // Switch to sequential mode when both codes are set
+      if (newState.playerCodes.red && newState.playerCodes.blue) {
+        newState.turnState.mode = 'sequential';
+        newState.gameStarted = true;
+      }
+      
+      return newState;
+    });
+  } else {
+    // Guessing phase - sequential
+    return TurnManager.handlePlayerAction(gameState, player, (state) => {
+      // Handle guess logic
+      return state;
+    });
+  }
+}
 ```
 
 ## ⚙️ Game Settings Configuration
@@ -331,6 +574,7 @@ Update `src/types/core.ts`:
 export interface GameSettings {
   turnTimeLimit: number;
   gameMode: string;
+  turnMode?: TurnMode;
   // Add your new settings
   yourGameSettings?: {
     customSetting: number;
@@ -391,6 +635,7 @@ The settings will automatically appear in the PreLobby component with the specif
 - **Immutable Updates**: Always create new state objects
 - **Centralized Logic**: Keep game rules in `*Logic.ts` files
 - **Event-Driven**: Use Svelte's event system for component communication
+- **Turn Management**: Use TurnManager for consistent turn handling
 
 ### Connection Handling
 - **Heartbeat awareness**: The system automatically handles connection monitoring
@@ -409,6 +654,7 @@ The settings will automatically appear in the PreLobby component with the specif
 3. **Edge Cases**: Test connection drops, timeouts, invalid moves
 4. **Mobile Testing**: Verify touch interactions work properly
 5. **Debug Mode**: Enable debug logging during development
+6. **Turn Management**: Test both sequential and simultaneous modes if applicable
 
 ## 🌐 Deployment
 
@@ -441,7 +687,8 @@ npm run build
 #### Game State Issues
 - **State Synchronization**: Check message handling in GameManager
 - **Move Validation**: Verify `canMakeMove` logic
-- **Turn Management**: Ensure proper turn switching
+- **Turn Management**: Ensure proper turn switching with TurnManager
+- **Simultaneous Mode**: Check that both players' actions are properly synchronized
 
 #### Development Issues
 - **TypeScript Errors**: Run `npm run check` for type checking
@@ -454,6 +701,7 @@ npm run build
 - **Debug Logging**: Extensive logging throughout the codebase (when enabled)
 - **Svelte DevTools**: Browser extension for component inspection
 - **Connection Monitor**: Built-in heartbeat system for connection status
+- **Turn Manager**: Built-in logging for turn state changes
 
 ## 📝 Contributing
 
@@ -471,6 +719,7 @@ npm run build
 - Add JSDoc comments for public functions
 - Keep functions small and focused
 - Use debug logging instead of console.log
+- Follow turn management patterns for consistency
 
 ## 📄 License
 

@@ -309,10 +309,6 @@
                 </div>
               </div>
               
-              <div class="correct-answer">
-                <strong>Correct answer:</strong> {currentQuestion?.correctAnswer ?? 'N/A'}
-              </div>
-              
               <div class="next-question-info">
                 {#if !isLastQuestion}
                   Next question in {gameState.feedbackTimeRemaining} seconds...
@@ -823,16 +819,6 @@
 
   .feedback-points.correct {
     background: #10b981;
-  }
-
-  .correct-answer {
-    text-align: center;
-    padding: 1rem;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: white;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
   }
 
   .next-question-info {
