@@ -1220,21 +1220,6 @@
       gap: 0.75rem;
     }
     
-    .score-section {
-      flex-direction: column;
-      gap: 0.5rem;
-      padding: 0.75rem;
-    }
-    
-    .score-card {
-      min-width: 140px;
-    }
-    
-    .vs-divider {
-      order: 1;
-      margin: 0.25rem 0;
-    }
-    
     .timer-content {
       gap: 0.5rem;
     }
@@ -1245,6 +1230,80 @@
     
     .fixed-timer {
       padding: 0.5rem;
+    }
+  }
+
+  /* Responsive design for different screen sizes */
+  @media (max-width: 425px) {
+    .score-section {
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+    
+    .score-card {
+      min-width: 140px;
+      padding: 0.75rem;
+      gap: 0.5rem;
+    }
+    
+    .score-number {
+      font-size: 2rem;
+    }
+    
+    .score-progress-bar {
+      width: 80px;
+    }
+    
+    .vs-divider {
+      order: 1;
+      margin: 0.25rem 0;
+      width: 35px;
+      height: 35px;
+      font-size: 1rem;
+    }
+  }
+
+  @media (min-width: 426px) and (max-width: 768px) {
+    .score-section {
+      flex-direction: row;
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+    
+    .score-card {
+      min-width: 120px;
+      padding: 0.75rem;
+      gap: 0.5rem;
+      flex: 1;
+      max-width: 150px;
+    }
+    
+    .score-number {
+      font-size: 2rem;
+    }
+    
+    .score-progress-bar {
+      width: 80px;
+    }
+    
+    .vs-divider {
+      width: 35px;
+      height: 35px;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    
+    .score-header {
+      gap: 0.25rem;
+    }
+    
+    .player-name {
+      font-size: 0.8rem;
+    }
+    
+    .status-indicator {
+      font-size: 0.9rem;
     }
   }
 </style>
