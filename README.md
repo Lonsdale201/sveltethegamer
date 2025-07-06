@@ -666,7 +666,7 @@ The settings will automatically appear in the PreLobby component with the specif
 
 This project is automatically deployed to GitHub Pages when changes are pushed to the main branch.
 
-**Live Demo**: https://YOUR_USERNAME.github.io/shadow-games-p2p/
+**Live Demo**: https://YOUR_USERNAME.github.io/mygamename/
 
 #### Setup Instructions:
 1. Fork this repository to your GitHub account
