@@ -33,7 +33,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 4,
     exactPoints: 2,
-    closePoints: 1
+    closePoints: 0 // Only exact answer gets points
   },
   {
     id: 'hu-3',
@@ -42,7 +42,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 1848,
     exactPoints: 2,
-    closePoints: 1
+    closePoints: 0 // Only exact answer gets points
   },
   {
     id: 'hu-4',
@@ -60,7 +60,52 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 96,
     exactPoints: 2,
-    closePoints: 1
+    closePoints: 0 // Only exact answer gets points
+  },
+  {
+    id: 'hu-6',
+    text: 'Melyik évben alapították a Budapesti Műszaki Egyetemet?',
+    type: 'number',
+    language: 'HU',
+    correctAnswer: 1782,
+    exactPoints: 2,
+    closePoints: 0
+  },
+  {
+    id: 'hu-7',
+    text: 'Ki írta a Toldi című eposzát?',
+    type: 'select',
+    language: 'HU',
+    options: ['Petőfi Sándor', 'Arany János', 'Vörösmarty Mihály', 'Jókai Mór'],
+    correctAnswer: 'Arany János',
+    exactPoints: 1
+  },
+  {
+    id: 'hu-8',
+    text: 'Hány megye van Magyarországon?',
+    type: 'number',
+    language: 'HU',
+    correctAnswer: 19,
+    exactPoints: 2,
+    closePoints: 0
+  },
+  {
+    id: 'hu-9',
+    text: 'Melyik magyar város a "Virágok városa"?',
+    type: 'select',
+    language: 'HU',
+    options: ['Debrecen', 'Szeged', 'Pécs', 'Kecskemét'],
+    correctAnswer: 'Debrecen',
+    exactPoints: 1
+  },
+  {
+    id: 'hu-10',
+    text: 'Milyen hosszú a Duna Magyarországon (km-ben)?',
+    type: 'number',
+    language: 'HU',
+    correctAnswer: 417,
+    exactPoints: 2,
+    closePoints: 1 // Close answers get 1 point
   }
 ];
 
@@ -82,7 +127,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 4,
     exactPoints: 2,
-    closePoints: 1
+    closePoints: 0 // Only exact answer gets points
   },
   {
     id: 'en-3',
@@ -91,7 +136,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 1848,
     exactPoints: 2,
-    closePoints: 1
+    closePoints: 0 // Only exact answer gets points
   },
   {
     id: 'en-4',
@@ -109,7 +154,52 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 96,
     exactPoints: 2,
-    closePoints: 1
+    closePoints: 0 // Only exact answer gets points
+  },
+  {
+    id: 'en-6',
+    text: 'In which year was the Budapest University of Technology founded?',
+    type: 'number',
+    language: 'EN',
+    correctAnswer: 1782,
+    exactPoints: 2,
+    closePoints: 0
+  },
+  {
+    id: 'en-7',
+    text: 'Who wrote the epic poem "Toldi"?',
+    type: 'select',
+    language: 'EN',
+    options: ['Sándor Petőfi', 'János Arany', 'Mihály Vörösmarty', 'Mór Jókai'],
+    correctAnswer: 'János Arany',
+    exactPoints: 1
+  },
+  {
+    id: 'en-8',
+    text: 'How many counties are there in Hungary?',
+    type: 'number',
+    language: 'EN',
+    correctAnswer: 19,
+    exactPoints: 2,
+    closePoints: 0
+  },
+  {
+    id: 'en-9',
+    text: 'Which Hungarian city is called the "City of Flowers"?',
+    type: 'select',
+    language: 'EN',
+    options: ['Debrecen', 'Szeged', 'Pécs', 'Kecskemét'],
+    correctAnswer: 'Debrecen',
+    exactPoints: 1
+  },
+  {
+    id: 'en-10',
+    text: 'How long is the Danube River in Hungary (in km)?',
+    type: 'number',
+    language: 'EN',
+    correctAnswer: 417,
+    exactPoints: 2,
+    closePoints: 1 // Close answers get 1 point
   }
 ];
 

@@ -292,14 +292,18 @@
             id="targetScore"
             type="number" 
             bind:value={brainstormingTargetScore}
-            min="5"
+            min="0"
             max="50"
             step="5"
             class="timer-input"
             placeholder="10"
           />
           <p class="setting-description">
-            First player to reach {brainstormingTargetScore} points wins
+            {#if brainstormingTargetScore === 0}
+              Play all questions, highest score wins
+            {:else}
+              First player to reach {brainstormingTargetScore} points wins
+            {/if}
           </p>
           
           <label for="language">Question language:</label>

@@ -8,6 +8,18 @@ import { TurnManager } from '../../core/TurnManager';
 export function checkWinner(gameState: BrainstormingGameState): Player | null {
   const targetScore = gameState.gameSettings.targetScore;
   
+  // If target score is 0, play all questions and highest score wins
+  if (targetScore === 0) {
+    // Check if all questions are answered
+    if (gameState.currentQuestionIndex >= gameState.questions.length) {
+      if (gameState.playerScores.red > gameState.playerScores.blue) return 'red';
+      if (gameState.playerScores.blue > gameState.playerScores.red) return 'blue';
+      return null; // Tie
+    }
+    return null; // Game continues
+  }
+  
+  // Normal target score logic
   if (gameState.playerScores.red >= targetScore && gameState.playerScores.blue >= targetScore) {
     // Both reached target, highest score wins
     if (gameState.playerScores.red > gameState.playerScores.blue) return 'red';
@@ -18,7 +30,7 @@ export function checkWinner(gameState: BrainstormingGameState): Player | null {
   if (gameState.playerScores.red >= targetScore) return 'red';
   if (gameState.playerScores.blue >= targetScore) return 'blue';
   
-  // Check if all questions are answered
+  // Check if all questions are answered (fallback)
   if (gameState.currentQuestionIndex >= gameState.questions.length) {
     if (gameState.playerScores.red > gameState.playerScores.blue) return 'red';
     if (gameState.playerScores.blue > gameState.playerScores.red) return 'blue';
@@ -124,7 +136,7 @@ function calculatePoints(answer: string | number, question: Question): { points:
     }
     
     // For number questions, award close points if available
-    if (question.closePoints) {
+    if (question.closePoints && question.closePoints > 0) {
       return {
         points: question.closePoints,
         isExact: false

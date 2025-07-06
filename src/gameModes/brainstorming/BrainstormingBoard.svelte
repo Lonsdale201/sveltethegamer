@@ -38,6 +38,7 @@
   $: opponentAnswered = gameState.answersSubmitted[opponentColor];
   $: bothAnswered = hasAnswered && opponentAnswered;
   $: isLastQuestion = gameState.currentQuestionIndex >= gameState.questions.length - 1;
+  $: targetScore = gameState.gameSettings.targetScore;
 
   function handleSubmitAnswer() {
     if (!currentQuestion || hasAnswered) return;
@@ -86,6 +87,18 @@
     return lastAnswer;
   }
 
+  function getScoreProgress(score: number): number {
+    if (targetScore === 0) return 0;
+    return Math.min(100, (score / targetScore) * 100);
+  }
+
+  function getScoreColor(score: number): string {
+    const progress = getScoreProgress(score);
+    if (progress >= 80) return '#10b981'; // Green
+    if (progress >= 50) return '#f59e0b'; // Orange
+    return '#3b82f6'; // Blue
+  }
+
   $: myLastAnswer = getLastAnswerResult(myColor);
   $: opponentLastAnswer = getLastAnswerResult(opponentColor);
 </script>
@@ -109,26 +122,81 @@
 <div class="game-container">
   <div class="game-status">
     {#if connected && gameState.gameStarted}
-      <div class="players-info">
-        <div class="player-display">
-          <span class="color-indicator {myColor}"></span>
-          <span class="player-name">{myPlayerInfo?.name || 'You'}</span>
-          <span class="score">{myScore}/{gameState.gameSettings.targetScore}</span>
-          {#if hasAnswered}
-            <span class="status-indicator answered">✓</span>
-          {:else}
-            <span class="status-indicator thinking">🤔</span>
+      <!-- Score Display -->
+      <div class="score-section">
+        <div class="score-card my-score">
+          <div class="score-header">
+            <span class="color-indicator {myColor}"></span>
+            <span class="player-name">{myPlayerInfo?.name || 'You'}</span>
+            {#if hasAnswered}
+              <span class="status-indicator answered">✓</span>
+            {:else}
+              <span class="status-indicator thinking">🤔</span>
+            {/if}
+          </div>
+          <div class="score-display">
+            <div class="score-number" style="color: {getScoreColor(myScore)}">{myScore}</div>
+            {#if targetScore > 0}
+              <div class="score-target">/ {targetScore}</div>
+              <div class="score-progress-bar">
+                <div 
+                  class="score-progress-fill" 
+                  style="width: {getScoreProgress(myScore)}%; background-color: {getScoreColor(myScore)}"
+                ></div>
+              </div>
+            {:else}
+              <div class="score-label">points</div>
+            {/if}
+          </div>
+          {#if myLastAnswer && bothAnswered}
+            <div class="last-answer-result" class:correct={myLastAnswer.points > 0}>
+              {#if myLastAnswer.points > 0}
+                <span class="result-icon">✅</span>
+                <span class="result-text">+{myLastAnswer.points} pont{myLastAnswer.points > 1 ? '' : ''}</span>
+              {:else}
+                <span class="result-icon">❌</span>
+                <span class="result-text">0 pont</span>
+              {/if}
+            </div>
           {/if}
         </div>
+
         <div class="vs-divider">VS</div>
-        <div class="player-display">
-          <span class="color-indicator {opponentColor}"></span>
-          <span class="player-name">{opponentInfo?.name || 'Opponent'}</span>
-          <span class="score">{opponentScore}/{gameState.gameSettings.targetScore}</span>
-          {#if opponentAnswered}
-            <span class="status-indicator answered">✓</span>
-          {:else}
-            <span class="status-indicator thinking">🤔</span>
+
+        <div class="score-card opponent-score">
+          <div class="score-header">
+            <span class="color-indicator {opponentColor}"></span>
+            <span class="player-name">{opponentInfo?.name || 'Opponent'}</span>
+            {#if opponentAnswered}
+              <span class="status-indicator answered">✓</span>
+            {:else}
+              <span class="status-indicator thinking">🤔</span>
+            {/if}
+          </div>
+          <div class="score-display">
+            <div class="score-number" style="color: {getScoreColor(opponentScore)}">{opponentScore}</div>
+            {#if targetScore > 0}
+              <div class="score-target">/ {targetScore}</div>
+              <div class="score-progress-bar">
+                <div 
+                  class="score-progress-fill" 
+                  style="width: {getScoreProgress(opponentScore)}%; background-color: {getScoreColor(opponentScore)}"
+                ></div>
+              </div>
+            {:else}
+              <div class="score-label">points</div>
+            {/if}
+          </div>
+          {#if opponentLastAnswer && bothAnswered}
+            <div class="last-answer-result" class:correct={opponentLastAnswer.points > 0}>
+              {#if opponentLastAnswer.points > 0}
+                <span class="result-icon">✅</span>
+                <span class="result-text">+{opponentLastAnswer.points} pont{opponentLastAnswer.points > 1 ? '' : ''}</span>
+              {:else}
+                <span class="result-icon">❌</span>
+                <span class="result-text">0 pont</span>
+              {/if}
+            </div>
           {/if}
         </div>
       </div>
@@ -139,7 +207,7 @@
     <div class="question-container">
       <div class="question-header">
         <div class="question-number">
-          Question {gameState.currentQuestionIndex + 1} of {gameState.questions.length}
+          Kérdés {gameState.currentQuestionIndex + 1} / {gameState.questions.length}
         </div>
         <div class="language-indicator">
           {gameState.gameSettings.language === 'HU' ? '🇭🇺' : '🇬🇧'}
@@ -170,7 +238,7 @@
                 <input 
                   type="number" 
                   bind:value={numberAnswer}
-                  placeholder="Enter your answer"
+                  placeholder="Add meg a válaszod"
                   class="number-input"
                 />
               </div>
@@ -181,18 +249,18 @@
               on:click={handleSubmitAnswer}
               disabled={currentQuestion.type === 'select' ? !selectedOption : !numberAnswer}
             >
-              🎯 Submit Answer
+              🎯 Válasz beküldése
             </button>
           </div>
         {:else}
           <div class="waiting-section">
             <div class="answer-submitted">
-              ✅ Answer submitted!
+              ✅ Válasz beküldve!
               {#if myLastAnswer}
                 <div class="my-answer">
-                  Your answer: <strong>{myLastAnswer.answer}</strong>
+                  Válaszod: <strong>{myLastAnswer.answer}</strong>
                   {#if myLastAnswer.points > 0}
-                    <span class="points-earned">+{myLastAnswer.points} points</span>
+                    <span class="points-earned">+{myLastAnswer.points} pont</span>
                   {/if}
                 </div>
               {/if}
@@ -200,7 +268,7 @@
             
             {#if !opponentAnswered}
               <div class="waiting-opponent">
-                Waiting for opponent to answer...
+                Várakozás az ellenfél válaszára...
                 <div class="loading-dots">
                   <div class="dot"></div>
                   <div class="dot"></div>
@@ -209,11 +277,11 @@
               </div>
             {:else}
               <div class="both-answered">
-                Both players answered! 
+                Mindkét játékos válaszolt! 
                 {#if !isLastQuestion}
-                  Moving to next question...
+                  Következő kérdés...
                 {:else}
-                  Calculating final results...
+                  Végeredmény számítása...
                 {/if}
               </div>
             {/if}
@@ -223,12 +291,12 @@
         <div class="question-info">
           <div class="points-info">
             {#if currentQuestion.type === 'select'}
-              <span class="points-label">Correct answer: {currentQuestion.exactPoints} points</span>
+              <span class="points-label">Helyes válasz: {currentQuestion.exactPoints} pont</span>
             {:else}
               <span class="points-label">
-                Exact answer: {currentQuestion.exactPoints} points
+                Pontos válasz: {currentQuestion.exactPoints} pont
                 {#if currentQuestion.closePoints}
-                  • Close answer: {currentQuestion.closePoints} points
+                  • Közeli válasz: {currentQuestion.closePoints} pont
                 {/if}
               </span>
             {/if}
@@ -241,20 +309,20 @@
   <!-- Results after both answered -->
   {#if bothAnswered && currentQuestion}
     <div class="results-section">
-      <h3>📊 Round Results</h3>
+      <h3>📊 Kör eredménye</h3>
       <div class="results-grid">
         <div class="result-card my-result">
           <div class="result-header">
             <span class="color-indicator {myColor}"></span>
-            <span>{myPlayerInfo?.name || 'You'}</span>
+            <span>{myPlayerInfo?.name || 'Te'}</span>
           </div>
           {#if myLastAnswer}
-            <div class="result-answer">Answer: <strong>{myLastAnswer.answer}</strong></div>
-            <div class="result-points" class:correct={myLastAnswer.isExact}>
+            <div class="result-answer">Válasz: <strong>{myLastAnswer.answer}</strong></div>
+            <div class="result-points" class:correct={myLastAnswer.points > 0}>
               {#if myLastAnswer.points > 0}
-                +{myLastAnswer.points} points {myLastAnswer.isExact ? '🎯' : '📍'}
+                +{myLastAnswer.points} pont {myLastAnswer.isExact ? '🎯' : '📍'}
               {:else}
-                0 points ❌
+                0 pont ❌
               {/if}
             </div>
           {/if}
@@ -263,15 +331,15 @@
         <div class="result-card opponent-result">
           <div class="result-header">
             <span class="color-indicator {opponentColor}"></span>
-            <span>{opponentInfo?.name || 'Opponent'}</span>
+            <span>{opponentInfo?.name || 'Ellenfél'}</span>
           </div>
           {#if opponentLastAnswer}
-            <div class="result-answer">Answer: <strong>{opponentLastAnswer.answer}</strong></div>
-            <div class="result-points" class:correct={opponentLastAnswer.isExact}>
+            <div class="result-answer">Válasz: <strong>{opponentLastAnswer.answer}</strong></div>
+            <div class="result-points" class:correct={opponentLastAnswer.points > 0}>
               {#if opponentLastAnswer.points > 0}
-                +{opponentLastAnswer.points} points {opponentLastAnswer.isExact ? '🎯' : '📍'}
+                +{opponentLastAnswer.points} pont {opponentLastAnswer.isExact ? '🎯' : '📍'}
               {:else}
-                0 points ❌
+                0 pont ❌
               {/if}
             </div>
           {/if}
@@ -279,7 +347,7 @@
       </div>
       
       <div class="correct-answer">
-        <strong>Correct answer:</strong> {currentQuestion.correctAnswer}
+        <strong>Helyes válasz:</strong> {currentQuestion.correctAnswer}
       </div>
     </div>
   {/if}
@@ -290,27 +358,54 @@
         {#if gameState.winner === myColor}
           <div class="win-content">
             <div class="win-emoji">🧠</div>
-            <h2>Brain Power!</h2>
-            <p>You outsmarted your opponent!</p>
-            <div class="final-score">
-              Final Score: {myScore} - {opponentScore}
-            </div>
+            <h2>Győzelem!</h2>
+            <p>Okosabb voltál az ellenfelénél!</p>
           </div>
         {:else}
           <div class="lose-content">
             <div class="lose-emoji">🤯</div>
-            <h2>Good Try!</h2>
-            <p>Your opponent was quicker to the target!</p>
-            <div class="final-score">
-              Final Score: {opponentScore} - {myScore}
-            </div>
+            <h2>Vereség!</h2>
+            <p>Az ellenfeled volt gyorsabb és okosabb!</p>
           </div>
         {/if}
+        
+        <div class="final-scores">
+          <h3>Végeredmény</h3>
+          <div class="final-score-grid">
+            <div class="final-score-item" class:winner={gameState.winner === myColor}>
+              <span class="color-indicator {myColor}"></span>
+              <span class="final-player-name">{myPlayerInfo?.name || 'Te'}</span>
+              <span class="final-score">{myScore} pont</span>
+              {#if gameState.winner === myColor}
+                <span class="winner-crown">👑</span>
+              {/if}
+            </div>
+            <div class="final-score-item" class:winner={gameState.winner === opponentColor}>
+              <span class="color-indicator {opponentColor}"></span>
+              <span class="final-player-name">{opponentInfo?.name || 'Ellenfél'}</span>
+              <span class="final-score">{opponentScore} pont</span>
+              {#if gameState.winner === opponentColor}
+                <span class="winner-crown">👑</span>
+              {/if}
+            </div>
+          </div>
+          
+          {#if targetScore > 0}
+            <div class="target-info">
+              Célpont: {targetScore} pont
+            </div>
+          {:else}
+            <div class="target-info">
+              {gameState.questions.length} kérdésből
+            </div>
+          {/if}
+        </div>
+        
         <button on:click={() => dispatch('reset')} class="reset-btn">
-          New Quiz
+          Új kvíz
         </button>
         <button on:click={() => dispatch('mainMenu')} class="main-menu-btn">
-          Main Menu
+          Főmenü
         </button>
       </div>
     </div>
@@ -400,60 +495,126 @@
     width: 100%;
   }
 
-  .players-info {
+  .score-section {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
     margin: 0;
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
     backdrop-filter: blur(5px);
     flex-wrap: wrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .player-display {
+  .score-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid #e5e7eb;
+    min-width: 160px;
+    transition: all 0.3s ease;
+  }
+
+  .my-score {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(255, 255, 255, 0.8));
+  }
+
+  .opponent-score {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(255, 255, 255, 0.8));
+  }
+
+  .score-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-weight: 500;
-    padding: 0.5rem 1rem;
+  }
+
+  .score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .score-number {
+    font-size: 2rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+  }
+
+  .score-target {
+    font-size: 1rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .score-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-style: italic;
+  }
+
+  .score-progress-bar {
+    width: 100px;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.25rem;
+  }
+
+  .score-progress-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+    border-radius: 3px;
+  }
+
+  .last-answer-result {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
     border-radius: 8px;
-    transition: all 0.3s ease;
-    position: relative;
+    font-size: 0.8rem;
+    font-weight: bold;
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .last-answer-result.correct {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+
+  .result-icon {
+    font-size: 1rem;
   }
 
   .vs-divider {
     font-weight: bold;
     color: #666;
-    font-size: 0.9rem;
-  }
-
-  .player-name {
-    font-size: 0.9rem;
-    color: #333;
-  }
-
-  .score {
-    background: rgba(59, 130, 246, 0.1);
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #1e40af;
-  }
-
-  .status-indicator {
-    font-size: 1rem;
-  }
-
-  .status-indicator.answered {
-    color: #10b981;
-  }
-
-  .status-indicator.thinking {
-    animation: pulse-thinking 2s infinite;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e5e7eb;
   }
 
   .color-indicator {
@@ -469,6 +630,23 @@
 
   .color-indicator.blue {
     background-color: #3b82f6;
+  }
+
+  .player-name {
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  .status-indicator {
+    font-size: 1rem;
+  }
+
+  .status-indicator.answered {
+    color: #10b981;
+  }
+
+  .status-indicator.thinking {
+    animation: pulse-thinking 2s infinite;
   }
 
   .question-container {
@@ -755,7 +933,7 @@
     padding: 3rem 2rem;
     text-align: center;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
+    max-width: 500px;
     width: 90%;
     animation: popup-appear 0.3s ease-out;
   }
@@ -790,13 +968,66 @@
     margin: 0 0 1rem 0;
   }
 
-  .final-score {
-    background: #f3f4f6;
-    padding: 1rem;
+  .final-scores {
+    background: #f8f9fa;
+    padding: 1.5rem;
     border-radius: 12px;
-    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+
+  .final-scores h3 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1.3rem;
+  }
+
+  .final-score-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .final-score-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+
+  .final-score-item.winner {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), white);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+  }
+
+  .final-player-name {
+    flex: 1;
+    text-align: left;
+    font-weight: 500;
+  }
+
+  .final-score {
+    font-size: 1.2rem;
     font-weight: bold;
-    color: #374151;
+    font-family: 'Courier New', monospace;
+    color: #333;
+  }
+
+  .winner-crown {
+    font-size: 1.5rem;
+    animation: bounce-crown 1s infinite;
+  }
+
+  .target-info {
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-style: italic;
   }
 
   .reset-btn {
@@ -882,6 +1113,18 @@
     }
   }
 
+  @keyframes bounce-crown {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-5px);
+    }
+    60% {
+      transform: translateY(-2px);
+    }
+  }
+
   @media (max-width: 768px) {
     .game-container {
       padding: 0.5rem;
@@ -902,10 +1145,19 @@
       gap: 0.75rem;
     }
     
-    .players-info {
+    .score-section {
       flex-direction: column;
       gap: 0.5rem;
       padding: 0.75rem;
+    }
+    
+    .score-card {
+      min-width: 140px;
+    }
+    
+    .vs-divider {
+      order: 1;
+      margin: 0.25rem 0;
     }
     
     .timer-content {
@@ -921,3 +1173,4 @@
     }
   }
 </style>
+</action>
