@@ -309,6 +309,11 @@
                 </div>
               </div>
               
+              <div class="correct-answer-section">
+                <div class="correct-answer-label">Correct Answer:</div>
+                <div class="correct-answer-value">{currentQuestion.correctAnswer}</div>
+              </div>
+              
               <div class="next-question-info">
                 {#if !isLastQuestion}
                   Next question in {gameState.feedbackTimeRemaining} seconds...
@@ -827,6 +832,34 @@
     font-size: 0.9rem;
   }
 
+  .correct-answer-section {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  }
+
+  .correct-answer-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+  }
+
+  .correct-answer-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    display: inline-block;
+    min-width: 100px;
+  }
+
   .answer-section {
     margin-bottom: 1.5rem;
   }
@@ -1250,6 +1283,18 @@
       height: 35px;
       font-size: 1rem;
     }
+    
+    .score-header {
+      gap: 0.25rem;
+    }
+    
+    .player-name {
+      font-size: 0.8rem;
+    }
+    
+    .status-indicator {
+      display: none; /* Hide emojis on very small screens */
+    }
   }
 
   @media (min-width: 426px) and (max-width: 768px) {
@@ -1291,7 +1336,7 @@
     }
     
     .status-indicator {
-      font-size: 0.9rem;
+      display: none; /* Hide emojis on medium screens */
     }
   }
 </style>
