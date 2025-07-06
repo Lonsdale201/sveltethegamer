@@ -1,11 +1,28 @@
 import type { Question, Language } from '../../types/brainstorming';
 
-// Fixed seed for consistent question order across all players
+// Generate a seed based on current date and hour for consistent randomization per session
+function generateSessionSeed(): number {
+  const now = new Date();
+  // Use date + hour to create a seed that changes every hour but is consistent within the hour
+  const dateString = now.getFullYear().toString() + 
+                    (now.getMonth() + 1).toString().padStart(2, '0') + 
+                    now.getDate().toString().padStart(2, '0') + 
+                    now.getHours().toString().padStart(2, '0');
+  
+  // Convert to number and add some randomness based on minutes for more variation
+  const baseSeed = parseInt(dateString);
+  const minuteVariation = Math.floor(now.getMinutes() / 10); // Changes every 10 minutes
+  
+  return baseSeed + minuteVariation;
+}
+
+// Seeded random function for consistent results
 function seededRandom(seed: number): number {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
+// Shuffle array with a given seed for consistent results across players
 function shuffleWithSeed<T>(array: T[], seed: number): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -33,7 +50,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 4,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   },
   {
     id: 'hu-3',
@@ -42,7 +59,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 1848,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   },
   {
     id: 'hu-4',
@@ -60,7 +77,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 96,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   },
   {
     id: 'hu-6',
@@ -105,7 +122,7 @@ const hungarianQuestions: Question[] = [
     language: 'HU',
     correctAnswer: 417,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   }
 ];
 
@@ -127,7 +144,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 4,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   },
   {
     id: 'en-3',
@@ -136,7 +153,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 1848,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   },
   {
     id: 'en-4',
@@ -154,7 +171,7 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 96,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   },
   {
     id: 'en-6',
@@ -199,15 +216,18 @@ const englishQuestions: Question[] = [
     language: 'EN',
     correctAnswer: 417,
     exactPoints: 2,
-    closePoints: 1 // Close answers get 1 point
+    closePoints: 1
   }
 ];
 
 export function getQuestionsByLanguage(language: Language): Question[] {
   const questions = language === 'HU' ? hungarianQuestions : englishQuestions;
-  // Use fixed seed to ensure all players get the same question order
-  const seed = 12345; // Fixed seed for consistency
-  return shuffleWithSeed(questions, seed);
+  
+  // Generate a session-based seed that changes periodically but is consistent for both players
+  const sessionSeed = generateSessionSeed();
+  
+  // Shuffle questions with the session seed to ensure both players get the same order
+  return shuffleWithSeed(questions, sessionSeed);
 }
 
 export function getAllQuestions(): Question[] {
