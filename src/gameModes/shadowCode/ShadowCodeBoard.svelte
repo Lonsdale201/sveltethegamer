@@ -183,10 +183,19 @@
                   {/each}
                 </div>
                 <div class="guess-result">
-                  <span class="result-icon">{getResultIcon(guess.exactMatches, guess.partialMatches)}</span>
-                  <div class="result-details">
-                    <span class="exact-matches">🔵 {guess.exactMatches}</span>
-                    <span class="partial-matches">🟡 {guess.partialMatches}</span>
+                  <div class="result-dots">
+                    <!-- Exact match dots (blue) -->
+                    {#each Array(guess.exactMatches) as _, i}
+                      <div class="result-dot exact"></div>
+                    {/each}
+                    <!-- Partial match dots (yellow) -->
+                    {#each Array(guess.partialMatches) as _, i}
+                      <div class="result-dot partial"></div>
+                    {/each}
+                    <!-- Empty dots to fill up to 3 total -->
+                    {#each Array(3 - guess.exactMatches - guess.partialMatches) as _, i}
+                      <div class="result-dot empty"></div>
+                    {/each}
                   </div>
                 </div>
               </div>
@@ -238,10 +247,19 @@
                   {/each}
                 </div>
                 <div class="guess-result">
-                  <span class="result-icon">{getResultIcon(guess.exactMatches, guess.partialMatches)}</span>
-                  <div class="result-details">
-                    <span class="exact-matches">🔵 {guess.exactMatches}</span>
-                    <span class="partial-matches">🟡 {guess.partialMatches}</span>
+                  <div class="result-dots">
+                    <!-- Exact match dots (blue) -->
+                    {#each Array(guess.exactMatches) as _, i}
+                      <div class="result-dot exact"></div>
+                    {/each}
+                    <!-- Partial match dots (yellow) -->
+                    {#each Array(guess.partialMatches) as _, i}
+                      <div class="result-dot partial"></div>
+                    {/each}
+                    <!-- Empty dots to fill up to 3 total -->
+                    {#each Array(3 - guess.exactMatches - guess.partialMatches) as _, i}
+                      <div class="result-dot empty"></div>
+                    {/each}
                   </div>
                 </div>
               </div>
@@ -259,15 +277,15 @@
         <h4>🔑 Legend:</h4>
         <div class="legend-items">
           <div class="legend-item">
-            <span class="legend-icon">🔵</span>
+            <div class="result-dot exact"></div>
             <span>Correct number, correct position</span>
           </div>
           <div class="legend-item">
-            <span class="legend-icon">🟡</span>
+            <div class="result-dot partial"></div>
             <span>Correct number, wrong position</span>
           </div>
           <div class="legend-item">
-            <span class="legend-icon">❌</span>
+            <div class="result-dot empty"></div>
             <span>No matches</span>
           </div>
         </div>
@@ -610,8 +628,9 @@
   }
 
   .guess-row {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
     align-items: center;
     padding: 0.75rem;
     margin-bottom: 0.5rem;
@@ -622,43 +641,66 @@
 
   .guess-numbers {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    justify-content: flex-start;
   }
 
   .guess-digit {
     background: #1f2937;
     color: white;
-    width: 30px;
-    height: 30px;
-    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    font-weight: 900;
     font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
   .guess-result {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
 
-  .result-icon {
-    font-size: 1.2rem;
-  }
-
-  .result-details {
+  .result-dots {
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.8rem;
+    gap: 0.5rem;
+    align-items: center;
   }
 
-  .exact-matches, .partial-matches {
+  .result-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .result-dot.exact {
+    background: #3b82f6;
+    border-color: #2563eb;
+    color: white;
+  }
+
+  .result-dot.partial {
+    background: #f59e0b;
+    border-color: #d97706;
+    color: white;
+  }
+
+  .result-dot.empty {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #9ca3af;
   }
 
   .no-guesses {
@@ -724,9 +766,6 @@
     font-size: 0.9rem;
   }
 
-  .legend-icon {
-    font-size: 1.2rem;
-  }
 
   .game-over-overlay {
     position: fixed;
