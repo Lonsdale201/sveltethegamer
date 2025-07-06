@@ -91,6 +91,10 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
   debugLog('Brainstorming makeMove: Player answer added:', playerAnswer);
   debugLog('Brainstorming makeMove: Current answers submitted:', newState.answersSubmitted);
   
+  // Apply score immediately when player submits answer
+  newState.playerScores[player] += points.points;
+  debugLog(`Brainstorming makeMove: Applied ${points.points} points to ${player} immediately, new score: ${newState.playerScores[player]}`);
+  
   // Check if both players have answered
   const bothAnswered = newState.answersSubmitted.red && newState.answersSubmitted.blue;
   
@@ -102,19 +106,10 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
     newState.feedbackStartTime = Date.now();
     newState.feedbackTimeRemaining = 6; // 6 seconds feedback
     
-    // Apply scores during feedback phase
-    for (const player of ['red', 'blue'] as Player[]) {
-      const playerAnswer = newState.playerAnswers[player].find(a => a.questionId === currentQuestion.id);
-      if (playerAnswer) {
-        newState.playerScores[player] += playerAnswer.points;
-        debugLog(`Brainstorming makeMove: Applied ${playerAnswer.points} points to ${player}, new score: ${newState.playerScores[player]}`);
-      }
-    }
-    
     // Check for winner after applying scores
     newState.winner = checkWinner(newState);
     
-    debugLog('Brainstorming makeMove: Feedback phase started, scores updated:', newState.playerScores);
+    debugLog('Brainstorming makeMove: Feedback phase started, current scores:', newState.playerScores);
   }
   
   return newState;

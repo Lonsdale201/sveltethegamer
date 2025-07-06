@@ -79,10 +79,11 @@
     const answers = gameState.playerAnswers[player];
     if (answers.length === 0) return null;
     
-    const lastAnswer = answers[answers.length - 1];
-    if (lastAnswer.questionId !== currentQuestion?.id) return null;
+    // Find the answer for the current question
+    const currentAnswer = answers.find(answer => answer.questionId === currentQuestion?.id);
+    if (!currentAnswer) return null;
     
-    return lastAnswer;
+    return currentAnswer;
   }
 
   function getScoreProgress(score: number): number {
