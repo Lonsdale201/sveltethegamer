@@ -310,7 +310,7 @@
               </div>
               
               <div class="correct-answer">
-                <strong>Correct answer:</strong> {currentQuestion.correctAnswer}
+                <strong>Correct answer:</strong> {currentQuestion?.correctAnswer ?? 'N/A'}
               </div>
               
               <div class="next-question-info">

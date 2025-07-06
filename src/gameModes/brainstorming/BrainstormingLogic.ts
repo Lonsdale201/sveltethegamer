@@ -67,6 +67,12 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
   debugLog('Brainstorming makeMove: Valid move by', player, 'moveData:', moveData);
   
   const newState = { ...gameState };
+  
+  // Debug log the current question and its correctAnswer
+  const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+  debugLog('Brainstorming makeMove: currentQuestion:', currentQuestion);
+  debugLog('Brainstorming makeMove: currentQuestion.correctAnswer:', currentQuestion?.correctAnswer);
+  
   newState.playerAnswers = {
     red: [...gameState.playerAnswers.red],
     blue: [...gameState.playerAnswers.blue]
@@ -74,7 +80,6 @@ export function makeMove(gameState: BrainstormingGameState, moveData: Brainstorm
   newState.playerScores = { ...gameState.playerScores };
   newState.answersSubmitted = { ...gameState.answersSubmitted };
   
-  const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
   const points = calculatePoints(moveData.answer, currentQuestion);
   
   const playerAnswer: PlayerAnswer = {
