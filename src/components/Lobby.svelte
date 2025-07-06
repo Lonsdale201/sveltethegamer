@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { gameModes } from '../gameModes';
   import type { GameManager } from '../core/GameManager';
 
@@ -16,6 +16,7 @@
   let maxTowerWarAttacks = 10;
   let activeTab = 'color-duel';
   let nameInputFocused = false;
+  let canShare = false;
 
   $: isHost = gameManager.getIsHost();
   $: roomCode = gameManager.getRoomCode();
@@ -27,6 +28,12 @@
   // Reactive validation for player name
   $: isNameValid = playerName.trim().length > 0;
   $: showNameError = showNameInput && !isNameValid && !nameInputFocused;
+
+  onMount(() => {
+    if (navigator.share) {
+      canShare = true;
+    }
+  });
 
   function handleCreateRoom() {
     if (!playerName.trim()) {
@@ -88,6 +95,33 @@
       // Truncate and update the input field
       playerName = value.slice(0, 12);
       event.target.value = playerName;
+    }
+  }
+
+  async function handleShareRoom() {
+    if (navigator.share && roomCode) {
+      try {
+        const shareUrl = window.location.origin;
+        const shareText = `Join my Color Duel P2P Game! Room Code: ${roomCode}\n\nClick here to play: ${shareUrl}`;
+        await navigator.share({
+          title: 'Color Duel P2P Game Invitation',
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        // Fallback: copy to clipboard if sharing fails
+        try {
+          const shareText = `Join my Color Duel P2P Game! Room Code: ${roomCode}\n\nPlay at: ${window.location.origin}`;
+          await navigator.clipboard.writeText(shareText);
+          showRoomCode = true;
+          setTimeout(() => {
+            showRoomCode = false;
+          }, 2000);
+        } catch (clipboardError) {
+          console.error('Error copying to clipboard:', clipboardError);
+        }
+      }
     }
   }
 
@@ -254,6 +288,11 @@
           {showRoomCode ? 'Copied!' : 'Copy'}
         </button>
       </div>
+      {#if canShare}
+        <button on:click={handleShareRoom} class="share-btn">
+          📤 Share Room
+        </button>
+      {/if}
       <p class="waiting-text">Waiting for player to join...</p>
     </div>
   {:else if connected}
@@ -544,6 +583,34 @@
 
   .copy-btn:hover {
     background-color: #4b5563;
+  }
+
+  .share-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    margin-top: 1rem;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+
+  .share-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+
+  .share-btn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 
   .waiting-text {
