@@ -258,7 +258,8 @@
                 </div>
                 {#if myLastAnswer}
                   <div class="feedback-answer">
-                    Answer: <strong>{myLastAnswer.answer}</strong>
+                    <div class="answer-label">Your Answer:</div>
+                    <div class="answer-value">{myLastAnswer.answer}</div>
                   </div>
                   <div class="feedback-points" class:correct={myLastAnswer.points > 0}>
                     {#if myLastAnswer.points > 0}
@@ -266,6 +267,14 @@
                     {:else}
                       0 points ❌
                     {/if}
+                  </div>
+                {:else}
+                  <div class="feedback-answer">
+                    <div class="answer-label">Your Answer:</div>
+                    <div class="answer-value timeout">No answer (timeout)</div>
+                  </div>
+                  <div class="feedback-points">
+                    0 points ❌
                   </div>
                 {/if}
               </div>
@@ -277,7 +286,8 @@
                 </div>
                 {#if opponentLastAnswer}
                   <div class="feedback-answer">
-                    Answer: <strong>{opponentLastAnswer.answer}</strong>
+                    <div class="answer-label">Their Answer:</div>
+                    <div class="answer-value">{opponentLastAnswer.answer}</div>
                   </div>
                   <div class="feedback-points" class:correct={opponentLastAnswer.points > 0}>
                     {#if opponentLastAnswer.points > 0}
@@ -285,6 +295,14 @@
                     {:else}
                       0 points ❌
                     {/if}
+                  </div>
+                {:else}
+                  <div class="feedback-answer">
+                    <div class="answer-label">Their Answer:</div>
+                    <div class="answer-value timeout">No answer (timeout)</div>
+                  </div>
+                  <div class="feedback-points">
+                    0 points ❌
                   </div>
                 {/if}
               </div>
@@ -761,8 +779,36 @@
   }
 
   .feedback-answer {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     color: #374151;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .answer-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .answer-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #1f2937;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    font-family: 'Courier New', monospace;
+  }
+
+  .answer-value.timeout {
+    color: #ef4444;
+    font-style: italic;
+    font-family: inherit;
   }
 
   .feedback-points {
