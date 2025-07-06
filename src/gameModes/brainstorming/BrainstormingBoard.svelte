@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { debugLog } from '../../config/debug';
   import type { BrainstormingGameState, BrainstormingMoveData, Question } from '../../types/brainstorming';
   import type { PlayerInfo, GameSettings } from '../../types/core';
@@ -17,7 +17,6 @@
 
   let selectedOption = '';
   let numberAnswer = '';
-  let feedbackTimer: number | null = null;
 
   // Reactive logging for props
   $: {
@@ -39,43 +38,6 @@
   $: bothAnswered = hasAnswered && opponentAnswered;
   $: isLastQuestion = gameState.currentQuestionIndex >= gameState.questions.length - 1;
   $: targetScore = gameState.gameSettings.targetScore;
-
-  // Handle feedback timer
-  $: if (gameState.showingFeedback && gameState.feedbackTimeRemaining > 0) {
-    startFeedbackTimer();
-  } else if (feedbackTimer) {
-    clearInterval(feedbackTimer);
-    feedbackTimer = null;
-  }
-
-  onMount(() => {
-    if (gameState.showingFeedback && gameState.feedbackTimeRemaining > 0) {
-      startFeedbackTimer();
-    }
-  });
-
-  onDestroy(() => {
-    if (feedbackTimer) {
-      clearInterval(feedbackTimer);
-    }
-  });
-
-  function startFeedbackTimer() {
-    if (feedbackTimer) {
-      clearInterval(feedbackTimer);
-    }
-    
-    feedbackTimer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - gameState.feedbackStartTime) / 1000);
-      const remaining = Math.max(0, 6 - elapsed);
-      
-      if (remaining <= 0) {
-        clearInterval(feedbackTimer!);
-        feedbackTimer = null;
-        // Timer will be handled by the main game timer system
-      }
-    }, 100);
-  }
 
   function handleSubmitAnswer() {
     if (!currentQuestion || hasAnswered) return;
@@ -314,7 +276,7 @@
             
             <div class="next-question-info">
               {#if !isLastQuestion}
-                Next question in {Math.max(0, Math.ceil(6 - (Date.now() - gameState.feedbackStartTime) / 1000))} seconds...
+                Next question in {gameState.feedbackTimeRemaining} seconds...
               {:else}
                 Calculating final results...
               {/if}
