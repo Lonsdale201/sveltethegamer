@@ -5,6 +5,7 @@
   import type { PlayerInfo, GameSettings } from '../../types/core';
   import type { Player } from '../../types/core';
   import { canMakeMove } from './BrainstormingLogic';
+  import { TurnManager } from '../../core/TurnManager';
 
   export let gameState: BrainstormingGameState;
   export let myColor: Player;
@@ -33,10 +34,11 @@
   $: opponentColor = myColor === 'red' ? 'blue' : 'red';
   $: myScore = gameState.playerScores[myColor];
   $: opponentScore = gameState.playerScores[opponentColor];
-  $: hasAnswered = gameState.answersSubmitted[myColor];
-  $: opponentAnswered = gameState.answersSubmitted[opponentColor];
+  $: hasAnswered = TurnManager.hasPlayerSubmitted(gameState, myColor);
+  $: opponentAnswered = TurnManager.hasPlayerSubmitted(gameState, opponentColor);
   $: bothAnswered = hasAnswered && opponentAnswered;
   $: isLastQuestion = gameState.currentQuestionIndex >= gameState.questions.length - 1;
+  $: isWaitingForPlayers = TurnManager.isWaitingForPlayers(gameState);
 
   function handleSubmitAnswer() {
     if (!currentQuestion || hasAnswered) return;
@@ -57,8 +59,12 @@
       player: myColor
     };
 
-    // Always allow submitting if we haven't answered yet
-    // The logic will handle validation
+    // Check if we can make the move using TurnManager
+    if (!TurnManager.canPlayerAct(gameState, myColor)) {
+      debugLog('BrainstormingBoard: Cannot act - TurnManager blocked action');
+      return;
+    }
+
     debugLog('BrainstormingBoard dispatching answer:', moveData);
     dispatch('move', moveData);
     

@@ -1,5 +1,14 @@
 export type Player = 'red' | 'blue';
 
+export type TurnMode = 'sequential' | 'simultaneous';
+
+export interface TurnState {
+  mode: TurnMode;
+  playersReady: Record<Player, boolean>;
+  actionsSubmitted: Record<Player, boolean>;
+  waitingForPlayers: boolean;
+}
+
 export interface PlayerInfo {
   id: string;
   name: string;
@@ -13,6 +22,7 @@ export interface BaseGameState {
   turnTimeLimit: number;
   turnStartTime: number;
   timeRemaining: number;
+  turnState?: TurnState;
 }
 
 export interface GameMessage {
@@ -23,6 +33,7 @@ export interface GameMessage {
 export interface GameSettings {
   turnTimeLimit: number;
   gameMode: string;
+  turnMode?: TurnMode;
   towerWarSettings?: {
     maxAttacks: number;
   };
@@ -39,6 +50,7 @@ export interface GameMode {
   component: any;
   initialState: () => any;
   gameLogic: any;
+  turnMode: TurnMode;
   settingsDisplay?: {
     [key: string]: {
       label: string;

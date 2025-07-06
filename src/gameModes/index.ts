@@ -20,6 +20,7 @@ export const gameModes: GameMode[] = [
     component: ColorDuelBoard,
     initialState: () => ({ ...initialColorDuelGameState }),
     gameLogic: ColorDuelLogic,
+    turnMode: 'sequential',
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',
@@ -35,6 +36,7 @@ export const gameModes: GameMode[] = [
     component: TowerWarBoard,
     initialState: () => ({ ...initialTowerWarGameState }),
     gameLogic: TowerWarLogic,
+    turnMode: 'sequential',
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',
@@ -55,6 +57,7 @@ export const gameModes: GameMode[] = [
     component: ShadowCodeBoard,
     initialState: () => ({ ...initialShadowCodeGameState }),
     gameLogic: ShadowCodeLogic,
+    turnMode: 'sequential',
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',
@@ -70,6 +73,7 @@ export const gameModes: GameMode[] = [
     component: BrainstormingBoard,
     initialState: () => ({ ...initialBrainstormingGameState }),
     gameLogic: BrainstormingLogic,
+    turnMode: 'simultaneous',
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',

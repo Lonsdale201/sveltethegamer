@@ -6,6 +6,7 @@
   import PreLobby from './components/PreLobby.svelte';
   import { GameManager } from './core/GameManager';
   import { getGameMode } from './gameModes';
+  import { TurnManager } from './core/TurnManager';
   import { makeMove, resetGame, skipTurn } from './gameModes/colorDuel/ColorDuelLogic';
   import type { GameMessage, Player } from './types/core';
   import type { ColorDuelGameState, MoveData } from './types/colorDuel';
@@ -61,7 +62,11 @@
     if (gameSettings.gameMode) {
       currentGameMode = getGameMode(gameSettings.gameMode);
       if (currentGameMode && !gameStarted) {
-        gameState = currentGameMode.gameLogic.resetGame(gameSettings);
+        const newGameSettings = {
+          ...gameSettings,
+          turnMode: currentGameMode.turnMode
+        };
+        gameState = currentGameMode.gameLogic.resetGame(newGameSettings);
       }
     }
   }

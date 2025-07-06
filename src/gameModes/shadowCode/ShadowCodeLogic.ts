@@ -2,6 +2,7 @@ import { debugLog } from '../../config/debug';
 import type { ShadowCodeGameState, ShadowCodeMoveData, GuessResult } from '../../types/shadowCode';
 import type { GameSettings } from '../../types/core';
 import type { Player } from '../../types/core';
+import { TurnManager } from '../../core/TurnManager';
 
 export function checkWinner(gameState: ShadowCodeGameState): Player | null {
   // Check if someone guessed the opponent's code correctly
@@ -141,6 +142,7 @@ export function resetGame(gameSettings: GameSettings): ShadowCodeGameState {
     turnTimeLimit: gameSettings.turnTimeLimit,
     turnStartTime: now,
     timeRemaining: gameSettings.turnTimeLimit,
+    turnState: TurnManager.initializeTurnState('sequential'),
   };
 }
 

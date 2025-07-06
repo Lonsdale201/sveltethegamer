@@ -1,6 +1,7 @@
 import { debugLog } from '../../config/debug';
 import type { TowerWarGameState, TowerWarAction, Player, TowerWarMoveData } from '../../types/towerWar';
 import type { GameSettings } from '../../types/core';
+import { TurnManager } from '../../core/TurnManager';
 
 export function checkWinner(gameState: TowerWarGameState): Player | null {
   const redPlayer = gameState.players.red;
@@ -111,6 +112,7 @@ export function resetGame(gameSettings: GameSettings): TowerWarGameState {
     turnTimeLimit: gameSettings.turnTimeLimit,
     turnStartTime: now,
     timeRemaining: gameSettings.turnTimeLimit,
+    turnState: TurnManager.initializeTurnState('sequential'),
   };
 }
 

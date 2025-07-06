@@ -1,6 +1,7 @@
 import { debugLog } from '../../config/debug';
 import type { ColorDuelGameState, Cell, Player, MoveData } from '../../types/colorDuel';
 import type { GameSettings } from '../../types/core';
+import { TurnManager } from '../../core/TurnManager';
 
 export function checkWinner(board: Cell[][]): Player | null {
   // Check rows
@@ -97,6 +98,7 @@ export function resetGame(gameSettings: GameSettings): ColorDuelGameState {
     turnTimeLimit: gameSettings.turnTimeLimit,
     turnStartTime: now,
     timeRemaining: gameSettings.turnTimeLimit,
+    turnState: TurnManager.initializeTurnState('sequential'),
   };
 }
 
