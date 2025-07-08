@@ -1,7 +1,7 @@
 import { debugLog, debugError } from '../config/debug';
 import type { GameMessage, PlayerInfo, Player, GameSettings } from '../types/core';
 import { PeerConnection } from './PeerConnection';
-import { sanitizePlayerName } from '../utils/sanitizer';
+import { sanitizePlayerName, isValidPlayerName } from '../utils/sanitizer';
 import { savePlayerName } from '../utils/storage';
 
 export class GameManager {
@@ -78,13 +78,18 @@ export class GameManager {
   setPlayerName(name: string): void {
     // Sanitize and validate the player name
     const sanitizedName = sanitizePlayerName(name, 12);
+    
+    // Additional validation
+    if (!sanitizedName || !isValidPlayerName(sanitizedName)) {
+      debugError('Invalid player name provided:', name);
+      return; // Don't set invalid names
+    }
+    
     this.myPlayerInfo.name = sanitizedName;
     this.myPlayerInfo = { ...this.myPlayerInfo };
     
     // Save to localStorage whenever name is set
-    if (sanitizedName.trim()) {
-      savePlayerName(sanitizedName);
-    }
+    savePlayerName(sanitizedName);
     
     if (this.connected && this.peer && this.inPreLobby) {
       this.peer.sendMessage({
@@ -274,8 +279,14 @@ export class GameManager {
         // Sanitize opponent's name when receiving player info
         const sanitizedOpponentInfo = {
           ...message.data,
-          name: sanitizePlayerName(message.data.name || '', 12)
+          name: sanitizePlayerName(message.data.name || '', 12) || 'Anonymous'
         };
+        
+        // Additional validation for opponent name
+        if (!isValidPlayerName(sanitizedOpponentInfo.name) && sanitizedOpponentInfo.name !== 'Anonymous') {
+          sanitizedOpponentInfo.name = 'Anonymous';
+        }
+        
         this.opponentInfo = sanitizedOpponentInfo;
         this.opponentInfo = { ...this.opponentInfo };
         break;

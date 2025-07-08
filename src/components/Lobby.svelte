@@ -3,6 +3,7 @@
   import { gameModes } from '../gameModes';
   import type { GameManager } from '../core/GameManager';
   import { savePlayerName, loadPlayerName } from '../utils/storage';
+  import { sanitizePlayerName, isValidPlayerName, isValidNameLength } from '../utils/sanitizer';
 
   export let gameManager: GameManager;
 
@@ -20,6 +21,7 @@
   let activeTab = 'color-duel';
   let nameInputFocused = false;
   let canShare = false;
+  let nameValidationError = '';
 
   $: isHost = gameManager.getIsHost();
   $: roomCode = gameManager.getRoomCode();
@@ -29,8 +31,21 @@
   $: myPlayerInfo = gameManager.getMyPlayerInfo();
 
   // Reactive validation for player name
-  $: isNameValid = playerName.trim().length > 0;
+  $: isNameValid = isValidPlayerName(playerName) && isValidNameLength(playerName, 12);
   $: showNameError = showNameInput && !isNameValid && !nameInputFocused;
+  
+  // Update validation error message
+  $: {
+    if (playerName.trim().length === 0) {
+      nameValidationError = 'Name cannot be empty';
+    } else if (!isValidNameLength(playerName, 12)) {
+      nameValidationError = 'Name must be 12 characters or less';
+    } else if (!isValidPlayerName(playerName)) {
+      nameValidationError = 'Name contains invalid characters. Only letters, numbers, spaces, and basic punctuation allowed.';
+    } else {
+      nameValidationError = '';
+    }
+  }
 
   onMount(() => {
     if (navigator.share) {
@@ -99,14 +114,49 @@
 
   function handleNameSubmit() {
     if (playerName.trim()) {
-      showNameInput = false;
-      // Save name to localStorage when submitted
-      savePlayerName(playerName.trim());
-      gameManager.setPlayerName(playerName.trim());
+      const sanitized = sanitizePlayerName(playerName.trim(), 12);
+      if (sanitized) {
+        playerName = sanitized;
+        showNameInput = false;
+        savePlayerName(sanitized);
+        gameManager.setPlayerName(sanitized);
+      } else {
+        nameValidationError = 'Invalid name. Please use only letters, numbers, and basic punctuation.';
+      }
     }
   }
 
   function handleNameInput(event) {
+    const value = event.target.value;
+    
+    // Prevent input that's too long
+    if (value.length > 12) {
+      event.target.value = value.slice(0, 12);
+      playerName = event.target.value;
+      return;
+    }
+    
+    // Real-time sanitization
+    const sanitized = sanitizePlayerName(value, 12);
+    if (sanitized !== value && sanitized.length > 0) {
+      // If sanitization changed the input, update it
+      event.target.value = sanitized;
+      playerName = sanitized;
+    } else if (sanitized.length === 0 && value.length > 0) {
+      // If sanitization removed everything, keep the field but mark as invalid
+      playerName = value.slice(0, 12);
+    } else {
+      playerName = value;
+    }
+    
+    // Save valid names as user types
+    if (sanitized && sanitized.trim()) {
+      savePlayerName(sanitized);
+    }
+  }
+
+  // Remove the old handleNameInput function and replace with this safer version
+  function handleNameInputOld(event) {
     const value = event.target.value;
     // Limit to 12 characters
     if (value.length <= 12) {
@@ -124,6 +174,7 @@
       }
     }
   }
+
 
   async function handleShareRoom() {
     if (navigator.share && roomCode) {
@@ -186,7 +237,9 @@
           type="text"
           placeholder="Your player name"
           bind:value={playerName}
-          maxlength="20"
+          maxlength="12"
+          pattern="[a-zA-Z0-9\s\-_\.áéíóöőúüűÁÉÍÓÖŐÚÜŰ]+"
+          title="Only letters, numbers, spaces, and basic punctuation allowed"
           class:error={showNameError}
           class:valid={isNameValid && playerName.length > 0}
           on:keydown={(e) => e.key === 'Enter' && handleNameSubmit()}
@@ -207,7 +260,7 @@
       </div>
       {#if showNameError}
         <div class="name-error">
-          ⚠️ Please enter a valid name to continue
+          ⚠️ {nameValidationError}
         </div>
       {/if}
     </div>
@@ -1015,9 +1068,10 @@
     border-radius: 8px;
     border: 1px solid #fecaca;
     margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-align: center;
     animation: fadeIn 0.3s ease-out;
+    line-height: 1.4;
   }
 
   .player-name-display {
