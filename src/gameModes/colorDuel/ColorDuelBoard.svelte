@@ -155,21 +155,24 @@
     {/if}
   </div>
 
-  <div class="board">
-    {#each gameState.board as row, x}
-      {#each row as cell, y}
-        <button
-          class={getCellClass(cell, x, y)}
-          on:click={() => handleCellClick(x, y)}
-          disabled={!canMakeMove(gameState, x, y, myColor)}
-        >
-          {#if cell !== 'empty'}
-            <div class="cell-color {cell}"></div>
-          {/if}
-        </button>
-      {/each}
+<div
+  class="board"
+  style="--board-size: {gameState.boardSize}"
+>
+  {#each gameState.board as row, x}
+    {#each row as cell, y}
+      <button
+        class={getCellClass(cell, x, y)}
+        on:click={() => handleCellClick(x, y)}
+        disabled={!canMakeMove(gameState, x, y, myColor)}
+      >
+        {#if cell !== 'empty'}
+          <div class="cell-color {cell}"></div>
+        {/if}
+      </button>
     {/each}
-  </div>
+  {/each}
+</div>
 
   {#if gameState.winner}
     <div class="game-over-overlay">
