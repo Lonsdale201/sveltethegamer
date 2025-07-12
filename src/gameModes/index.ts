@@ -26,6 +26,19 @@ export const gameModes: GameMode[] = [
         label: 'Turn Timer',
         getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
         icon: '⏱️'
+      },
+      boardSize: {
+        label: 'Board Size',
+        getValue: (settings) => `${settings.colorDuelSettings?.boardSize ?? 3}x${settings.colorDuelSettings?.boardSize ?? 3}`,
+        icon: '🎯'
+      },
+      stealsPerPlayer: {
+        label: 'Steals Per Player',
+        getValue: (settings) => {
+          const steals = settings.colorDuelSettings?.stealsPerPlayer ?? 1;
+          return steals === 0 ? 'No steals allowed' : `${steals} steal${steals > 1 ? 's' : ''} each`;
+        },
+        icon: '🎪'
       }
     }
   },

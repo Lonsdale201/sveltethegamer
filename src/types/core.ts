@@ -34,6 +34,10 @@ export interface GameSettings {
   turnTimeLimit: number;
   gameMode: string;
   turnMode?: TurnMode;
+  colorDuelSettings?: {
+    boardSize: 3 | 4 | 5;
+    stealsPerPlayer: number;
+  };
   towerWarSettings?: {
     maxAttacks: number;
   };

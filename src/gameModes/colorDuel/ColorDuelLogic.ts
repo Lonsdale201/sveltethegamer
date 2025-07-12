@@ -3,7 +3,119 @@ import type { ColorDuelGameState, Cell, Player, MoveData } from '../../types/col
 import type { GameSettings } from '../../types/core';
 import { TurnManager } from '../../core/TurnManager';
 
-export function checkWinner(board: Cell[][]): Player | null {
+export function checkWinner(board: Cell[][], boardSize: number): Player | null {
+  // Check rows
+  for (let i = 0; i < boardSize; i++) {
+    let consecutiveCount = 1;
+    let currentPlayer = board[i][0];
+    
+    if (currentPlayer === 'empty') continue;
+    
+    for (let j = 1; j < boardSize; j++) {
+      if (board[i][j] === currentPlayer) {
+        consecutiveCount++;
+        if (consecutiveCount >= 3) {
+          return currentPlayer as Player;
+        }
+      } else {
+        consecutiveCount = 1;
+        currentPlayer = board[i][j];
+        if (currentPlayer === 'empty') break;
+      }
+    }
+  }
+
+  // Check columns
+  for (let j = 0; j < boardSize; j++) {
+    let consecutiveCount = 1;
+    let currentPlayer = board[0][j];
+    
+    if (currentPlayer === 'empty') continue;
+    
+    for (let i = 1; i < boardSize; i++) {
+      if (board[i][j] === currentPlayer) {
+        consecutiveCount++;
+        if (consecutiveCount >= 3) {
+          return currentPlayer as Player;
+        }
+      } else {
+        consecutiveCount = 1;
+        currentPlayer = board[i][j];
+        if (currentPlayer === 'empty') break;
+      }
+    }
+  }
+
+  // Check diagonals (top-left to bottom-right)
+  for (let i = 0; i <= boardSize - 3; i++) {
+    for (let j = 0; j <= boardSize - 3; j++) {
+      let consecutiveCount = 1;
+      let currentPlayer = board[i][j];
+      
+      if (currentPlayer === 'empty') continue;
+      
+      for (let k = 1; k < 3; k++) {
+        if (i + k < boardSize && j + k < boardSize && board[i + k][j + k] === currentPlayer) {
+          consecutiveCount++;
+        } else {
+          break;
+        }
+      }
+      
+      if (consecutiveCount >= 3) {
+        return currentPlayer as Player;
+      }
+      
+      // Check for longer diagonals
+      for (let k = 3; i + k < boardSize && j + k < boardSize; k++) {
+        if (board[i + k][j + k] === currentPlayer) {
+          consecutiveCount++;
+          if (consecutiveCount >= 3) {
+            return currentPlayer as Player;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
+  // Check diagonals (top-right to bottom-left)
+  for (let i = 0; i <= boardSize - 3; i++) {
+    for (let j = 2; j < boardSize; j++) {
+      let consecutiveCount = 1;
+      let currentPlayer = board[i][j];
+      
+      if (currentPlayer === 'empty') continue;
+      
+      for (let k = 1; k < 3; k++) {
+        if (i + k < boardSize && j - k >= 0 && board[i + k][j - k] === currentPlayer) {
+          consecutiveCount++;
+        } else {
+          break;
+        }
+      }
+      
+      if (consecutiveCount >= 3) {
+        return currentPlayer as Player;
+      }
+      
+      // Check for longer diagonals
+      for (let k = 3; i + k < boardSize && j - k >= 0; k++) {
+        if (board[i + k][j - k] === currentPlayer) {
+          consecutiveCount++;
+          if (consecutiveCount >= 3) {
+            return currentPlayer as Player;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
+  return null;
+}
   // Check rows
   for (let i = 0; i < 3; i++) {
     if (board[i][0] !== 'empty' && board[i][0] === board[i][1] && board[i][1] === board[i][2]) {
@@ -39,10 +151,12 @@ export function canMakeMove(gameState: ColorDuelGameState, x: number, y: number,
   
   if (gameState.winner || !gameState.gameStarted) return false;
   if (gameState.currentTurn !== player) return false;
+  if (x < 0 || x >= gameState.boardSize || y < 0 || y >= gameState.boardSize) return false;
 
   const cell = gameState.board[x][y];
   debugLog('  cell at [' + x + ',' + y + ']:', cell);
-  debugLog('  player stolen status:', gameState.stolen[player]);
+  debugLog('  player steals used:', gameState.stealsUsed[player]);
+  debugLog('  max steals allowed:', gameState.maxSteals);
   
   // Can place on empty cell
   if (cell === 'empty') {
@@ -50,8 +164,8 @@ export function canMakeMove(gameState: ColorDuelGameState, x: number, y: number,
     return true;
   }
   
-  // Can steal opponent's cell if haven't stolen yet
-  if (cell !== player && !gameState.stolen[player]) {
+  // Can steal opponent's cell if haven't used all steals
+  if (cell !== player && gameState.stealsUsed[player] < gameState.maxSteals) {
     debugLog('canMakeMove: Allowing steal move');
     return true;
   }
@@ -75,24 +189,29 @@ export function makeMove(gameState: ColorDuelGameState, x: number, y: number, pl
   newState.board[x][y] = player;
   
   if (wasSteal) {
-    newState.stolen = { ...newState.stolen, [player]: true };
+    newState.stealsUsed = { ...newState.stealsUsed, [player]: newState.stealsUsed[player] + 1 };
   }
   
   const now = Date.now();
   newState.currentTurn = player === 'red' ? 'blue' : 'red';
   newState.turnStartTime = now;
   newState.timeRemaining = gameState.turnTimeLimit;
-  newState.winner = checkWinner(newState.board);
+  newState.winner = checkWinner(newState.board, newState.boardSize);
   
   return newState;
 }
 
 export function resetGame(gameSettings: GameSettings): ColorDuelGameState {
+  const boardSize = gameSettings.colorDuelSettings?.boardSize ?? 3;
+  const stealsPerPlayer = gameSettings.colorDuelSettings?.stealsPerPlayer ?? 1;
   const now = Date.now();
+  
   return {
-    board: Array(3).fill(null).map(() => Array(3).fill('empty')),
+    board: Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty')),
     currentTurn: 'red',
-    stolen: { red: false, blue: false },
+    stealsUsed: { red: 0, blue: 0 },
+    maxSteals: stealsPerPlayer,
+    boardSize: boardSize,
     winner: null,
     gameStarted: true,
     turnTimeLimit: gameSettings.turnTimeLimit,

@@ -1201,6 +1201,23 @@
     margin-top: 0;
   }
 
+  .color-duel-setting {
+    margin-bottom: 1rem;
+    text-align: left;
+  }
+
+  .color-duel-setting label {
+    display: block;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .color-duel-setting label:first-child {
+    margin-top: 0;
+  }
+
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }

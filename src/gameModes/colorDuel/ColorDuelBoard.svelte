@@ -79,6 +79,12 @@
 </script>
 
 <div class="game-container">
+  <style>
+    .board {
+      --board-size: {gameState.boardSize};
+    }
+  </style>
+  
   <div class="game-status">
     {#if connected && gameState.gameStarted && !gameState.winner && gameState.turnTimeLimit > 0}
       <div class="turn-timer" class:urgent={gameState.timeRemaining <= 5}>
@@ -119,22 +125,29 @@
             <span class="steal-icon">🎯</span>
             <span class="steal-title">Steal Power</span>
           </div>
-          {#if gameState.stolen[myColor]}
+          {#if gameState.maxSteals === 0}
+            <div class="steal-status none">
+              <span class="status-icon">🚫</span>
+              <span class="status-text">No Steals</span>
+            </div>
+          {:else if gameState.stealsUsed[myColor] >= gameState.maxSteals}
             <div class="steal-status used">
               <span class="status-icon">❌</span>
-              <span class="status-text">Used</span>
+              <span class="status-text">Used ({gameState.stealsUsed[myColor]}/{gameState.maxSteals})</span>
             </div>
           {:else}
             <div class="steal-status available">
               <span class="status-icon">✨</span>
-              <span class="status-text">Available</span>
+              <span class="status-text">Available ({gameState.stealsUsed[myColor]}/{gameState.maxSteals})</span>
             </div>
           {/if}
           <div class="steal-description">
-            {#if gameState.stolen[myColor]}
-              You've already used your steal ability
+            {#if gameState.maxSteals === 0}
+              Stealing is disabled for this game
+            {:else if gameState.stealsUsed[myColor] >= gameState.maxSteals}
+              You've used all your steal abilities
             {:else}
-              Click opponent's cell to steal it!
+              Click opponent's cell to steal it! ({gameState.maxSteals - gameState.stealsUsed[myColor]} left)
             {/if}
           </div>
         </div>
@@ -309,6 +322,18 @@
     font-size: 1rem;
   }
 
+  .steal-status {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    min-width: 120px;
+  }
+
   .steal-status.available {
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
@@ -320,6 +345,13 @@
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
     border: 2px solid #dc2626;
+    opacity: 0.8;
+  }
+
+  .steal-status.none {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+    border: 2px solid #4b5563;
     opacity: 0.8;
   }
 
@@ -340,17 +372,20 @@
 
   .board {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(var(--board-size, 3), 1fr);
     gap: 8px;
     padding: 1rem;
     background-color: #f5f5f5;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: min(90vw, 500px);
+    margin: 0 auto;
   }
 
   .cell {
-    width: 80px;
-    height: 80px;
+    width: calc(min(80px, 15vw));
+    height: calc(min(80px, 15vw));
+    aspect-ratio: 1;
     border: 2px solid #ddd;
     border-radius: 8px;
     background-color: white;
@@ -378,8 +413,8 @@
   }
 
   .cell-color {
-    width: 60px;
-    height: 60px;
+    width: 75%;
+    height: 75%;
     border-radius: 50%;
     animation: pop 0.3s ease;
   }
@@ -613,13 +648,13 @@
     }
 
     .cell {
-      width: 60px;
-      height: 60px;
+      width: calc(min(60px, 12vw));
+      height: calc(min(60px, 12vw));
     }
     
     .cell-color {
-      width: 40px;
-      height: 40px;
+      width: 70%;
+      height: 70%;
     }
     
     .timer-display {

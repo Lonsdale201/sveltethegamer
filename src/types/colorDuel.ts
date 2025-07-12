@@ -4,7 +4,9 @@ export type Cell = 'empty' | 'red' | 'blue';
 
 export interface ColorDuelGameState extends BaseGameState {
   board: Cell[][];
-  stolen: Record<Player, boolean>;
+  stealsUsed: Record<Player, number>;
+  maxSteals: number;
+  boardSize: number;
 }
 
 export interface MoveData {
@@ -16,7 +18,9 @@ export interface MoveData {
 export const initialColorDuelGameState: ColorDuelGameState = {
   board: Array(3).fill(null).map(() => Array(3).fill('empty')),
   currentTurn: 'red',
-  stolen: { red: false, blue: false },
+  stealsUsed: { red: 0, blue: 0 },
+  maxSteals: 1,
+  boardSize: 3,
   winner: null,
   gameStarted: false,
   turnTimeLimit: 0,
