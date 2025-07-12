@@ -18,6 +18,8 @@
   let maxTowerWarAttacks = 10;
   let brainstormingTargetScore = 10;
   let brainstormingLanguage = 'HU';
+  let colorDuelBoardSize = 3;
+  let colorDuelStealsPerPlayer = 1;
   let activeTab = 'color-duel';
   let nameInputFocused = false;
   let canShare = false;
@@ -85,6 +87,14 @@
       settings.brainstormingSettings = {
         targetScore: brainstormingTargetScore,
         language: brainstormingLanguage
+      };
+    }
+    
+    // Add Color Duel specific settings if that mode is selected
+    if (selectedGameMode === 'color-duel') {
+      settings.colorDuelSettings = {
+        boardSize: colorDuelBoardSize,
+        stealsPerPlayer: colorDuelStealsPerPlayer
       };
     }
     
@@ -386,6 +396,45 @@
           </select>
           <p class="setting-description">
             Questions will be displayed in {brainstormingLanguage === 'HU' ? 'Hungarian' : 'English'}
+          </p>
+        </div>
+      {/if}
+      
+      {#if selectedGameMode === 'color-duel'}
+        <div class="color-duel-setting">
+          <label for="boardSize">Board size:</label>
+          <select 
+            id="boardSize"
+            bind:value={colorDuelBoardSize}
+            class="game-mode-select"
+          >
+            <option value={3}>3x3 (Classic)</option>
+            <option value={4}>4x4 (Medium)</option>
+            <option value={5}>5x5 (Large)</option>
+          </select>
+          <p class="setting-description">
+            {colorDuelBoardSize}x{colorDuelBoardSize} grid - Get 3 in a row to win
+          </p>
+          
+          <label for="stealsPerPlayer">Steals per player:</label>
+          <input 
+            id="stealsPerPlayer"
+            type="number" 
+            bind:value={colorDuelStealsPerPlayer}
+            min="0"
+            max="5"
+            step="1"
+            class="timer-input"
+            placeholder="1"
+          />
+          <p class="setting-description">
+            {#if colorDuelStealsPerPlayer === 0}
+              No stealing allowed - pure strategy game
+            {:else if colorDuelStealsPerPlayer === 1}
+              Each player can steal 1 opponent cell
+            {:else}
+              Each player can steal up to {colorDuelStealsPerPlayer} opponent cells
+            {/if}
           </p>
         </div>
       {/if}
