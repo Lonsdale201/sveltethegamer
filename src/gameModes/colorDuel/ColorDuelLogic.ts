@@ -196,23 +196,28 @@ export function makeMove(gameState: ColorDuelGameState, x: number, y: number, pl
   newState.currentTurn = player === 'red' ? 'blue' : 'red';
   newState.turnStartTime = now;
   newState.timeRemaining = gameState.turnTimeLimit;
-  newState.winner = checkWinner(newState.board);
+  newState.winner = checkWinner(newState.board, newState.boardSize);
   
   return newState;
 }
 
 export function resetGame(gameSettings: GameSettings): ColorDuelGameState {
+  const boardSize = gameSettings.colorDuelSettings?.boardSize ?? 3;
+  const stealsPerPlayer = gameSettings.colorDuelSettings?.stealsPerPlayer ?? 1;
   const now = Date.now();
+  
   return {
-    board: Array(3).fill(null).map(() => Array(3).fill('empty')),
+    board: Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty')),
     currentTurn: 'red',
-    stolen: { red: false, blue: false },
+    stealsUsed: { red: 0, blue: 0 },
+    maxSteals: stealsPerPlayer,
+    boardSize: boardSize,
     winner: null,
     gameStarted: true,
     turnTimeLimit: gameSettings.turnTimeLimit,
     turnStartTime: now,
     timeRemaining: gameSettings.turnTimeLimit,
-    turnState: TurnManager.initializeTurnState('sequential')
+    turnState: TurnManager.initializeTurnState('sequential'),
   };
 }
 
