@@ -115,7 +115,7 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
   }
 
   return null;
-}
+
   // Check rows
   for (let i = 0; i < 3; i++) {
     if (board[i][0] !== 'empty' && board[i][0] === board[i][1] && board[i][1] === board[i][2]) {
@@ -196,28 +196,23 @@ export function makeMove(gameState: ColorDuelGameState, x: number, y: number, pl
   newState.currentTurn = player === 'red' ? 'blue' : 'red';
   newState.turnStartTime = now;
   newState.timeRemaining = gameState.turnTimeLimit;
-  newState.winner = checkWinner(newState.board, newState.boardSize);
+  newState.winner = checkWinner(newState.board);
   
   return newState;
 }
 
 export function resetGame(gameSettings: GameSettings): ColorDuelGameState {
-  const boardSize = gameSettings.colorDuelSettings?.boardSize ?? 3;
-  const stealsPerPlayer = gameSettings.colorDuelSettings?.stealsPerPlayer ?? 1;
   const now = Date.now();
-  
   return {
-    board: Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty')),
+    board: Array(3).fill(null).map(() => Array(3).fill('empty')),
     currentTurn: 'red',
-    stealsUsed: { red: 0, blue: 0 },
-    maxSteals: stealsPerPlayer,
-    boardSize: boardSize,
+    stolen: { red: false, blue: false },
     winner: null,
     gameStarted: true,
     turnTimeLimit: gameSettings.turnTimeLimit,
     turnStartTime: now,
     timeRemaining: gameSettings.turnTimeLimit,
-    turnState: TurnManager.initializeTurnState('sequential'),
+    turnState: TurnManager.initializeTurnState('sequential')
   };
 }
 
