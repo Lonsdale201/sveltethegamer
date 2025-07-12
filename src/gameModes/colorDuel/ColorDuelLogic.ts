@@ -8,9 +8,7 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
   for (let i = 0; i < boardSize; i++) {
     let consecutiveCount = 1;
     let currentPlayer = board[i][0];
-    
     if (currentPlayer === 'empty') continue;
-    
     for (let j = 1; j < boardSize; j++) {
       if (board[i][j] === currentPlayer) {
         consecutiveCount++;
@@ -29,9 +27,7 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
   for (let j = 0; j < boardSize; j++) {
     let consecutiveCount = 1;
     let currentPlayer = board[0][j];
-    
     if (currentPlayer === 'empty') continue;
-    
     for (let i = 1; i < boardSize; i++) {
       if (board[i][j] === currentPlayer) {
         consecutiveCount++;
@@ -46,33 +42,26 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
     }
   }
 
-  // Check diagonals (top-left to bottom-right)
+  // Check diagonals (top-left → bottom-right)
   for (let i = 0; i <= boardSize - 3; i++) {
     for (let j = 0; j <= boardSize - 3; j++) {
       let consecutiveCount = 1;
       let currentPlayer = board[i][j];
-      
       if (currentPlayer === 'empty') continue;
-      
+      // First 3
       for (let k = 1; k < 3; k++) {
-        if (i + k < boardSize && j + k < boardSize && board[i + k][j + k] === currentPlayer) {
+        if (board[i + k][j + k] === currentPlayer) {
           consecutiveCount++;
         } else {
           break;
         }
       }
-      
-      if (consecutiveCount >= 3) {
-        return currentPlayer as Player;
-      }
-      
-      // Check for longer diagonals
+      if (consecutiveCount >= 3) return currentPlayer as Player;
+      // Longer
       for (let k = 3; i + k < boardSize && j + k < boardSize; k++) {
         if (board[i + k][j + k] === currentPlayer) {
           consecutiveCount++;
-          if (consecutiveCount >= 3) {
-            return currentPlayer as Player;
-          }
+          if (consecutiveCount >= 3) return currentPlayer as Player;
         } else {
           break;
         }
@@ -80,66 +69,36 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
     }
   }
 
-  // Check diagonals (top-right to bottom-left)
+  // Check diagonals (top-right → bottom-left)
   for (let i = 0; i <= boardSize - 3; i++) {
     for (let j = 2; j < boardSize; j++) {
       let consecutiveCount = 1;
       let currentPlayer = board[i][j];
-      
       if (currentPlayer === 'empty') continue;
-      
+      // First 3
       for (let k = 1; k < 3; k++) {
-        if (i + k < boardSize && j - k >= 0 && board[i + k][j - k] === currentPlayer) {
+        if (board[i + k][j - k] === currentPlayer) {
           consecutiveCount++;
         } else {
           break;
         }
       }
-      
-      if (consecutiveCount >= 3) {
-        return currentPlayer as Player;
-      }
-      
-      // Check for longer diagonals
+      if (consecutiveCount >= 3) return currentPlayer as Player;
+      // Longer
       for (let k = 3; i + k < boardSize && j - k >= 0; k++) {
         if (board[i + k][j - k] === currentPlayer) {
           consecutiveCount++;
-          if (consecutiveCount >= 3) {
-            return currentPlayer as Player;
-          }
+          if (consecutiveCount >= 3) return currentPlayer as Player;
         } else {
           break;
         }
       }
     }
-  }
-
-  return null;
-
-  // Check rows
-  for (let i = 0; i < 3; i++) {
-    if (board[i][0] !== 'empty' && board[i][0] === board[i][1] && board[i][1] === board[i][2]) {
-      return board[i][0] as Player;
-    }
-  }
-
-  // Check columns
-  for (let i = 0; i < 3; i++) {
-    if (board[0][i] !== 'empty' && board[0][i] === board[1][i] && board[1][i] === board[2][i]) {
-      return board[0][i] as Player;
-    }
-  }
-
-  // Check diagonals
-  if (board[0][0] !== 'empty' && board[0][0] === board[1][1] && board[1][1] === board[2][2]) {
-    return board[0][0] as Player;
-  }
-  if (board[0][2] !== 'empty' && board[0][2] === board[1][1] && board[1][1] === board[2][0]) {
-    return board[0][2] as Player;
   }
 
   return null;
 }
+
 
 export function canMakeMove(gameState: ColorDuelGameState, x: number, y: number, player: Player): boolean {
   debugLog('canMakeMove: Called with:', { gameState, x, y, player });
