@@ -178,8 +178,11 @@
         debugLog('App: Starting game with settings:', gameSettings);
         // Initialize game state when receiving startGame message
         if (currentGameMode) {
-          gameState = currentGameMode.gameLogic.resetGame(gameSettings);
-          debugLog('App: Game state initialized for non-host:', gameState);
+          const startSettings = message.data?.gameSettings ?? gameSettings;
+          // sync local settings to the received payload to avoid divergence
+          gameSettings = startSettings;
+          gameState = currentGameMode.gameLogic.resetGame(startSettings);
+          debugLog('App: Game state initialized for non-host with received settings:', gameState);
         }
         startTurnTimer();
         break;

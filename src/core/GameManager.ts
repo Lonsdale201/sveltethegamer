@@ -160,6 +160,20 @@ export class GameManager {
     if (!this.peer || !this.connected || !this.isHost) return;
     
     debugLog('GameManager: startGame called with settings:', this.gameSettings);
+
+    // Ensure brainstorming has a seed so both peers share identical question order
+    if (this.gameSettings.gameMode === 'brainstorming') {
+      const existingSeed = this.gameSettings.brainstormingSettings?.questionSeed;
+      if (!existingSeed) {
+        this.gameSettings = {
+          ...this.gameSettings,
+          brainstormingSettings: {
+            ...(this.gameSettings.brainstormingSettings || {}),
+            questionSeed: Date.now()
+          }
+        };
+      }
+    }
     
     this.gameStarted = true;
     this.inPreLobby = false;
