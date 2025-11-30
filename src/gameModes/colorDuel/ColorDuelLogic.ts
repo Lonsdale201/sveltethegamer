@@ -3,7 +3,19 @@ import type { ColorDuelGameState, Cell, Player, MoveData } from '../../types/col
 import type { GameSettings } from '../../types/core';
 import { TurnManager } from '../../core/TurnManager';
 
-export function checkWinner(board: Cell[][], boardSize: number): Player | null {
+function deriveDefaultWinLength(boardSize: number): number {
+  if (boardSize <= 3) return 3;
+  if (boardSize === 4) return 4;
+  return 4; // default for 5x5 (can be overridden)
+}
+
+function clampWinLength(winLength: number, boardSize: number): number {
+  const min = 3;
+  const max = boardSize;
+  return Math.max(min, Math.min(max, winLength));
+}
+
+export function checkWinner(board: Cell[][], boardSize: number, winLength: number): Player | null {
   // Check rows
   for (let i = 0; i < boardSize; i++) {
     let consecutiveCount = 1;
@@ -12,7 +24,7 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
     for (let j = 1; j < boardSize; j++) {
       if (board[i][j] === currentPlayer) {
         consecutiveCount++;
-        if (consecutiveCount >= 3) {
+        if (consecutiveCount >= winLength) {
           return currentPlayer as Player;
         }
       } else {
@@ -31,7 +43,7 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
     for (let i = 1; i < boardSize; i++) {
       if (board[i][j] === currentPlayer) {
         consecutiveCount++;
-        if (consecutiveCount >= 3) {
+        if (consecutiveCount >= winLength) {
           return currentPlayer as Player;
         }
       } else {
@@ -43,25 +55,25 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
   }
 
   // Check diagonals (top-left → bottom-right)
-  for (let i = 0; i <= boardSize - 3; i++) {
-    for (let j = 0; j <= boardSize - 3; j++) {
+  for (let i = 0; i <= boardSize - winLength; i++) {
+    for (let j = 0; j <= boardSize - winLength; j++) {
       let consecutiveCount = 1;
       let currentPlayer = board[i][j];
       if (currentPlayer === 'empty') continue;
-      // First 3
-      for (let k = 1; k < 3; k++) {
+      // First segment up to winLength
+      for (let k = 1; k < winLength; k++) {
         if (board[i + k][j + k] === currentPlayer) {
           consecutiveCount++;
         } else {
           break;
         }
       }
-      if (consecutiveCount >= 3) return currentPlayer as Player;
+      if (consecutiveCount >= winLength) return currentPlayer as Player;
       // Longer
-      for (let k = 3; i + k < boardSize && j + k < boardSize; k++) {
+      for (let k = winLength; i + k < boardSize && j + k < boardSize; k++) {
         if (board[i + k][j + k] === currentPlayer) {
           consecutiveCount++;
-          if (consecutiveCount >= 3) return currentPlayer as Player;
+          if (consecutiveCount >= winLength) return currentPlayer as Player;
         } else {
           break;
         }
@@ -70,25 +82,25 @@ export function checkWinner(board: Cell[][], boardSize: number): Player | null {
   }
 
   // Check diagonals (top-right → bottom-left)
-  for (let i = 0; i <= boardSize - 3; i++) {
-    for (let j = 2; j < boardSize; j++) {
+  for (let i = 0; i <= boardSize - winLength; i++) {
+    for (let j = winLength - 1; j < boardSize; j++) {
       let consecutiveCount = 1;
       let currentPlayer = board[i][j];
       if (currentPlayer === 'empty') continue;
-      // First 3
-      for (let k = 1; k < 3; k++) {
+      // First segment up to winLength
+      for (let k = 1; k < winLength; k++) {
         if (board[i + k][j - k] === currentPlayer) {
           consecutiveCount++;
         } else {
           break;
         }
       }
-      if (consecutiveCount >= 3) return currentPlayer as Player;
+      if (consecutiveCount >= winLength) return currentPlayer as Player;
       // Longer
-      for (let k = 3; i + k < boardSize && j - k >= 0; k++) {
+      for (let k = winLength; i + k < boardSize && j - k >= 0; k++) {
         if (board[i + k][j - k] === currentPlayer) {
           consecutiveCount++;
-          if (consecutiveCount >= 3) return currentPlayer as Player;
+          if (consecutiveCount >= winLength) return currentPlayer as Player;
         } else {
           break;
         }
@@ -155,7 +167,7 @@ export function makeMove(gameState: ColorDuelGameState, x: number, y: number, pl
   newState.currentTurn = player === 'red' ? 'blue' : 'red';
   newState.turnStartTime = now;
   newState.timeRemaining = gameState.turnTimeLimit;
-  newState.winner = checkWinner(newState.board, newState.boardSize);
+  newState.winner = checkWinner(newState.board, newState.boardSize, newState.winLength);
   
   return newState;
 }
@@ -163,6 +175,8 @@ export function makeMove(gameState: ColorDuelGameState, x: number, y: number, pl
 export function resetGame(gameSettings: GameSettings): ColorDuelGameState {
   const boardSize = gameSettings.colorDuelSettings?.boardSize ?? 3;
   const stealsPerPlayer = gameSettings.colorDuelSettings?.stealsPerPlayer ?? 1;
+  const rawWinLength = gameSettings.colorDuelSettings?.winLength ?? deriveDefaultWinLength(boardSize);
+  const winLength = clampWinLength(rawWinLength, boardSize);
   const now = Date.now();
   
   return {
@@ -171,6 +185,7 @@ export function resetGame(gameSettings: GameSettings): ColorDuelGameState {
     stealsUsed: { red: 0, blue: 0 },
     maxSteals: stealsPerPlayer,
     boardSize: boardSize,
+    winLength,
     winner: null,
     gameStarted: true,
     turnTimeLimit: gameSettings.turnTimeLimit,

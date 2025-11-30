@@ -39,6 +39,11 @@ export const gameModes: GameMode[] = [
           return steals === 0 ? 'No steals allowed' : `${steals} steal${steals > 1 ? 's' : ''} each`;
         },
         icon: '🎯'
+      },
+      winLength: {
+        label: 'Win Length',
+        getValue: (settings) => `${settings.colorDuelSettings?.winLength ?? 3} in a row`,
+        icon: '🏆'
       }
     }
   },

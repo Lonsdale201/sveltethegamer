@@ -22,6 +22,7 @@
   let selectedTopics = brainstormingTopics.map(topic => topic.id);
   let colorDuelBoardSize = 3;
   let colorDuelStealsPerPlayer = 1;
+  let colorDuelWinLength = 3;
   let activeTab = 'color-duel';
   let nameInputFocused = false;
   let canShare = false;
@@ -98,7 +99,8 @@
     if (selectedGameMode === 'color-duel') {
       settings.colorDuelSettings = {
         boardSize: colorDuelBoardSize,
-        stealsPerPlayer: colorDuelStealsPerPlayer
+        stealsPerPlayer: colorDuelStealsPerPlayer,
+        winLength: colorDuelWinLength
       };
     }
     
@@ -195,6 +197,15 @@
     } else {
       selectedTopics = [...selectedTopics, topicId];
     }
+  }
+
+  $: {
+    // Clamp win length when board size changes
+    if (colorDuelBoardSize < 3) colorDuelBoardSize = 3;
+    const maxWin = colorDuelBoardSize;
+    const minWin = 3;
+    if (colorDuelWinLength > maxWin) colorDuelWinLength = maxWin;
+    if (colorDuelWinLength < minWin) colorDuelWinLength = minWin;
   }
 
 
@@ -468,6 +479,26 @@
               Each player can steal 1 opponent cell
             {:else}
               Each player can steal up to {colorDuelStealsPerPlayer} opponent cells
+            {/if}
+          </p>
+
+          <label for="winLength">Winning line length:</label>
+          <input
+            id="winLength"
+            type="number"
+            bind:value={colorDuelWinLength}
+            min="3"
+            max={colorDuelBoardSize}
+            step="1"
+            class="timer-input"
+          />
+          <p class="setting-description">
+            {#if colorDuelBoardSize === 3}
+              Need 3 in a row (classic tic-tac-toe).
+            {:else if colorDuelBoardSize === 4}
+              Recommended: 4 in a row for a fair challenge.
+            {:else}
+              Recommended: 4 in a row for faster games, 5 for longer battles.
             {/if}
           </p>
         </div>

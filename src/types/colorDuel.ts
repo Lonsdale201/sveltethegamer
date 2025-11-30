@@ -7,6 +7,7 @@ export interface ColorDuelGameState extends BaseGameState {
   stealsUsed: Record<Player, number>;
   maxSteals: number;
   boardSize: number;
+  winLength: number;
 }
 
 export interface MoveData {
@@ -21,6 +22,7 @@ export const initialColorDuelGameState: ColorDuelGameState = {
   stealsUsed: { red: 0, blue: 0 },
   maxSteals: 1,
   boardSize: 3,
+  winLength: 3,
   winner: null,
   gameStarted: false,
   turnTimeLimit: 0,

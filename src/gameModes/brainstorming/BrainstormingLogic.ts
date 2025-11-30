@@ -7,11 +7,15 @@ import { TurnManager } from '../../core/TurnManager';
 
 export function checkWinner(gameState: BrainstormingGameState): Player | null {
   const targetScore = gameState.gameSettings.targetScore;
+  const allQuestionsAnswered =
+    gameState.questions.length > 0 &&
+    gameState.currentQuestionIndex >= gameState.questions.length - 1 &&
+    gameState.answersSubmitted.red &&
+    gameState.answersSubmitted.blue;
   
   // If target score is 0, play all questions and highest score wins
   if (targetScore === 0) {
-    // Check if all questions are answered
-    if (gameState.currentQuestionIndex >= gameState.questions.length) {
+    if (allQuestionsAnswered) {
       if (gameState.playerScores.red > gameState.playerScores.blue) return 'red';
       if (gameState.playerScores.blue > gameState.playerScores.red) return 'blue';
       return null; // Tie
@@ -30,8 +34,8 @@ export function checkWinner(gameState: BrainstormingGameState): Player | null {
   if (gameState.playerScores.red >= targetScore) return 'red';
   if (gameState.playerScores.blue >= targetScore) return 'blue';
   
-  // Check if all questions are answered (fallback)
-  if (gameState.currentQuestionIndex >= gameState.questions.length) {
+  // Check if all questions are answered (fallback when target not reached)
+  if (allQuestionsAnswered) {
     if (gameState.playerScores.red > gameState.playerScores.blue) return 'red';
     if (gameState.playerScores.blue > gameState.playerScores.red) return 'blue';
     return null; // Tie

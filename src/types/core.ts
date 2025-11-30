@@ -37,6 +37,7 @@ export interface GameSettings {
   colorDuelSettings?: {
     boardSize: 3 | 4 | 5;
     stealsPerPlayer: number;
+    winLength?: number;
   };
   towerWarSettings?: {
     maxAttacks: number;
