@@ -16,17 +16,28 @@
   let placementStart: Coord | null = null;
   let previewCoords: Coord[] = [];
   let previewInvalid = false;
-  let statusText = 'Válassz egy hajót, kattints a pályán a kezdeti cellára, majd a végpontra.';
+  let statusText = 'Válassz hajót, kattints a pályán a kezdő cellára, majd a végpontra.';
 
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   $: opponentColor = myColor === 'red' ? 'blue' : 'red';
   $: boardSize = gameState.boardSize;
-  function shipAllowance(size: number): { allowed: number; placed: number; remaining: number } {
-    const allowed = gameState.availableShips.filter((s) => s === size).length;
-    const placed = gameState.shipsPlaced[myColor].filter((p) => p.size === size).length;
-    return { allowed, placed, remaining: Math.max(0, allowed - placed) };
-  }
+  $: shipCounts = (() => {
+    const counts: Record<number, { allowed: number; placed: number; remaining: number }> = {};
+    for (const sz of gameState.availableShips) {
+      counts[sz] = counts[sz] || { allowed: 0, placed: 0, remaining: 0 };
+      counts[sz].allowed += 1;
+    }
+    for (const p of gameState.shipsPlaced[myColor]) {
+      counts[p.size] = counts[p.size] || { allowed: 0, placed: 0, remaining: 0 };
+      counts[p.size].placed += 1;
+    }
+    for (const key of Object.keys(counts)) {
+      const c = counts[Number(key)];
+      c.remaining = Math.max(0, c.allowed - c.placed);
+    }
+    return counts;
+  })();
   $: phase = gameState.phase;
 
   function selectShip(size: number) {
@@ -99,7 +110,7 @@
     previewCoords = [];
     previewInvalid = false;
     selectedShipSize = null;
-    statusText = 'Hajó lerakva. Válassz egy újabb hajót.';
+    statusText = 'Hajó lerakva. Válassz egy újabbat.';
   }
 
   function handleOwnCellHover(x: number, y: number) {
@@ -144,11 +155,11 @@
 <div class="torpedo-wrapper">
   <div class="header">
     <div class="status">
-      <div class="phase">Phase: {phase === 'placement' ? 'Placement' : 'Battle'}</div>
+      <div class="phase">Fázis: {phase === 'placement' ? 'Előkészítés' : 'Csata'}</div>
       {#if phase === 'battle'}
-        <div class="turn">Turn: {gameState.currentTurn === myColor ? 'Your shot' : 'Opponent turn'}</div>
+        <div class="turn">Kör: {gameState.currentTurn === myColor ? 'Te lősz' : 'Ellenfél köre'}</div>
       {:else}
-        <div class="turn">Place your ships ({gameState.shipsPlaced[myColor].length}/{gameState.availableShips.length})</div>
+        <div class="turn">Hajók: {gameState.shipsPlaced[myColor].length}/{gameState.availableShips.length}</div>
       {/if}
     </div>
     <div class="players">
@@ -212,13 +223,13 @@
         <div class="shipyard">
           <div class="shipyard-title">Hajók (kattints, majd rakd le a pályára)</div>
           <div class="ship-list">
-            {#each [...new Set(gameState.availableShips)] as size}
-              {#if shipAllowance(size).remaining > 0}
+            {#each Object.keys(shipCounts).map(Number).sort((a, b) => a - b) as size}
+              {#if shipCounts[size]?.remaining > 0}
                 <button
                   class="ship-btn {selectedShipSize === size ? 'selected' : ''}"
                   on:click={() => selectShip(size)}
                 >
-                  <span>{size} hosszú (marad: {shipAllowance(size).remaining})</span>
+                  <span>{size} hosszú (marad: {shipCounts[size].remaining})</span>
                   <span class="ship-cells">
                     {#each Array(size) as _, i}
                       <span></span>
