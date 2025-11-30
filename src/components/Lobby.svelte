@@ -4,6 +4,7 @@
   import type { GameManager } from '../core/GameManager';
   import { savePlayerName, loadPlayerName } from '../utils/storage';
   import { sanitizePlayerName, isValidPlayerName, isValidNameLength } from '../utils/sanitizer';
+  import { brainstormingTopics } from '../gameModes/brainstorming/questions';
 
   export let gameManager: GameManager;
 
@@ -18,6 +19,7 @@
   let maxTowerWarAttacks = 10;
   let brainstormingTargetScore = 10;
   let brainstormingLanguage = 'HU';
+  let selectedTopics = brainstormingTopics.map(topic => topic.id);
   let colorDuelBoardSize = 3;
   let colorDuelStealsPerPlayer = 1;
   let activeTab = 'color-duel';
@@ -86,7 +88,8 @@
     if (selectedGameMode === 'brainstorming') {
       settings.brainstormingSettings = {
         targetScore: brainstormingTargetScore,
-        language: brainstormingLanguage
+        language: brainstormingLanguage,
+        topics: [...selectedTopics]
       };
     }
     
@@ -182,6 +185,14 @@
       if (playerName.trim()) {
         savePlayerName(playerName.trim());
       }
+    }
+  }
+
+  function toggleTopic(topicId: string) {
+    if (selectedTopics.includes(topicId)) {
+      selectedTopics = selectedTopics.filter((id) => id !== topicId);
+    } else {
+      selectedTopics = [...selectedTopics, topicId];
     }
   }
 
@@ -396,6 +407,28 @@
           </select>
           <p class="setting-description">
             Questions will be displayed in {brainstormingLanguage === 'HU' ? 'Hungarian' : 'English'}
+          </p>
+
+          <label>Question topics (choose one or more):</label>
+          <div class="topics-grid">
+            {#each brainstormingTopics as topic}
+              <label class="topic-pill">
+                <input
+                  type="checkbox"
+                  value={topic.id}
+                  checked={selectedTopics.includes(topic.id)}
+                  on:change={() => toggleTopic(topic.id)}
+                />
+                <span>{brainstormingLanguage === 'HU' ? topic.label : topic.labelEn}</span>
+              </label>
+            {/each}
+          </div>
+          <p class="setting-description">
+            {#if selectedTopics.length === 0}
+              No topic selected: all topics will be used.
+            {:else}
+              Selected: {selectedTopics.join(', ')}
+            {/if}
           </p>
         </div>
       {/if}
@@ -1248,6 +1281,34 @@
 
   .brainstorming-setting label:first-child {
     margin-top: 0;
+  }
+
+  .topics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0 0.75rem 0;
+  }
+
+  .topic-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .topic-pill:hover {
+    border-color: #3b82f6;
+    background: #eef2ff;
+  }
+
+  .topic-pill input {
+    accent-color: #3b82f6;
   }
 
   .color-duel-setting {

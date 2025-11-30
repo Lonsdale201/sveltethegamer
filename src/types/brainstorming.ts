@@ -2,6 +2,7 @@ import type { BaseGameState, Player } from './core';
 
 export type QuestionType = 'select' | 'number';
 export type Language = 'HU' | 'EN';
+export type BrainstormingTopic = 'history' | 'literature' | 'geography' | 'programming';
 
 export interface Question {
   id: string;
@@ -12,6 +13,7 @@ export interface Question {
   correctAnswer: string | number;
   exactPoints: number; // Points for exact answer
   closePoints?: number; // Points for closest answer (number type only)
+  tags: BrainstormingTopic[];
 }
 
 export interface PlayerAnswer {
@@ -35,6 +37,7 @@ export interface BrainstormingGameState extends BaseGameState {
   gameSettings: {
     targetScore: number;
     language: Language;
+    topics?: BrainstormingTopic[];
   };
 }
 
@@ -57,7 +60,8 @@ export const initialBrainstormingGameState: BrainstormingGameState = {
   feedbackTimeRemaining: 0,
   gameSettings: {
     targetScore: 10,
-    language: 'HU'
+    language: 'HU',
+    topics: undefined
   },
   gameStarted: false,
   currentTurn: 'red',

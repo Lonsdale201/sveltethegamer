@@ -160,8 +160,9 @@ function calculatePoints(answer: string | number, question: Question): { points:
 export function resetGame(gameSettings: GameSettings): BrainstormingGameState {
   const language = gameSettings.brainstormingSettings?.language ?? 'HU';
   const targetScore = gameSettings.brainstormingSettings?.targetScore ?? 10;
+  const topics = gameSettings.brainstormingSettings?.topics;
   
-  const questions = getQuestionsByLanguage(language);
+  const questions = getQuestionsByLanguage(language, topics);
   const now = Date.now();
   
   return {
@@ -176,7 +177,8 @@ export function resetGame(gameSettings: GameSettings): BrainstormingGameState {
     feedbackTimeRemaining: 0,
     gameSettings: {
       targetScore,
-      language
+      language,
+      topics
     },
     gameStarted: true,
     currentTurn: 'red',

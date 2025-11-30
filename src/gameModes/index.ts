@@ -24,13 +24,13 @@ export const gameModes: GameMode[] = [
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',
-        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        getValue: (settings) => (settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`),
         icon: '⏱️'
       },
       boardSize: {
         label: 'Board Size',
         getValue: (settings) => `${settings.colorDuelSettings?.boardSize ?? 3}x${settings.colorDuelSettings?.boardSize ?? 3}`,
-        icon: '🎯'
+        icon: '🟦'
       },
       stealsPerPlayer: {
         label: 'Steals Per Player',
@@ -38,7 +38,7 @@ export const gameModes: GameMode[] = [
           const steals = settings.colorDuelSettings?.stealsPerPlayer ?? 1;
           return steals === 0 ? 'No steals allowed' : `${steals} steal${steals > 1 ? 's' : ''} each`;
         },
-        icon: '🎪'
+        icon: '🎯'
       }
     }
   },
@@ -53,20 +53,20 @@ export const gameModes: GameMode[] = [
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',
-        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        getValue: (settings) => (settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`),
         icon: '⏱️'
       },
       maxAttacks: {
         label: 'Max Attacks',
         getValue: (settings) => `${settings.towerWarSettings?.maxAttacks ?? 10} per player`,
-        icon: '💥'
+        icon: '🛡️'
       }
     }
   },
   {
     id: 'shadow-code',
     name: 'Shadow Code',
-    description: 'Crack your opponent\'s 3-digit secret code before they crack yours',
+    description: "Crack your opponent's 3-digit secret code before they crack yours",
     component: ShadowCodeBoard,
     initialState: () => ({ ...initialShadowCodeGameState }),
     gameLogic: ShadowCodeLogic,
@@ -74,7 +74,7 @@ export const gameModes: GameMode[] = [
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',
-        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        getValue: (settings) => (settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`),
         icon: '⏱️'
       }
     }
@@ -90,23 +90,31 @@ export const gameModes: GameMode[] = [
     settingsDisplay: {
       turnTimer: {
         label: 'Turn Timer',
-        getValue: (settings) => settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`,
+        getValue: (settings) => (settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`),
         icon: '⏱️'
       },
       targetScore: {
         label: 'Target Score',
         getValue: (settings) => `${settings.brainstormingSettings?.targetScore ?? 10} points to win`,
-        icon: '🎯'
+        icon: '🏁'
       },
       language: {
         label: 'Language',
-        getValue: (settings) => settings.brainstormingSettings?.language === 'HU' ? 'Hungarian 🇭🇺' : 'English 🇬🇧',
-        icon: '🌐'
+        getValue: (settings) => (settings.brainstormingSettings?.language === 'HU' ? 'Hungarian' : 'English'),
+        icon: '🗣️'
+      },
+      topics: {
+        label: 'Topics',
+        getValue: (settings) => {
+          const topics = settings.brainstormingSettings?.topics;
+          return topics && topics.length ? topics.join(', ') : 'All topics';
+        },
+        icon: '📚'
       }
     }
   }
 ];
 
 export function getGameMode(id: string): GameMode | undefined {
-  return gameModes.find(mode => mode.id === id);
+  return gameModes.find((mode) => mode.id === id);
 }

@@ -44,6 +44,7 @@ export interface GameSettings {
   brainstormingSettings?: {
     targetScore: number;
     language: 'HU' | 'EN';
+    topics?: string[];
   };
 }
 
