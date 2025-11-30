@@ -5,6 +5,7 @@
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "types": ["svelte"],
     "strict": true,
     "noEmit": true
   },
