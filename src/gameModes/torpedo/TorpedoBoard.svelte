@@ -91,7 +91,7 @@
       return;
     }
 
-    const move: TorpedoMoveData = { type: 'placeShip', start: placementStart, end, player: myColor };
+    const move: TorpedoMoveData = { type: 'placeShip', start: placementStart, end, size: selectedShipSize, player: myColor };
     dispatch('move', move);
     placementStart = null;
     previewCoords = [];

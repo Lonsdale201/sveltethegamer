@@ -43,7 +43,7 @@ export interface TorpedoGameState extends BaseGameState {
 }
 
 export type TorpedoMoveData =
-  | { type: 'placeShip'; start: Coord; end: Coord; player: Player }
+  | { type: 'placeShip'; start: Coord; end: Coord; size: number; player: Player }
   | { type: 'fire'; target: Coord; player: Player };
 
 export const initialTorpedoGameState: TorpedoGameState = {

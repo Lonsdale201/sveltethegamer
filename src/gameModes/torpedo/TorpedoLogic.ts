@@ -23,33 +23,8 @@ function createEmptyBoard(size: number): TorpedoBoard {
   };
 }
 
-function coordsAligned(start: Coord, end: Coord) {
-  return start.x === end.x || start.y === end.y;
-}
-
-function getCellsBetween(start: Coord, end: Coord): Coord[] {
-  const cells: Coord[] = [];
-  const dx = Math.sign(end.x - start.x);
-  const dy = Math.sign(end.y - start.y);
-  const length = Math.max(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) + 1;
-  for (let i = 0; i < length; i++) {
-    cells.push({ x: start.x + dx * i, y: start.y + dy * i });
-  }
-  return cells;
-}
-
 function isWithinBoard(coord: Coord, size: number): boolean {
   return coord.x >= 0 && coord.x < size && coord.y >= 0 && coord.y < size;
-}
-
-function canPlaceShip(board: TorpedoBoard, placement: ShipPlacement, boardSize: number): boolean {
-  if (!coordsAligned(placement.start, placement.end)) return false;
-  if (placement.cells.length !== placement.size) return false;
-  for (const cell of placement.cells) {
-    if (!isWithinBoard(cell, boardSize)) return false;
-    if (board.grid[cell.x][cell.y].hasShip) return false;
-  }
-  return true;
 }
 
 function placeShip(board: TorpedoBoard, placement: ShipPlacement) {
@@ -74,6 +49,28 @@ function nextTurn(player: Player): Player {
   return player === 'red' ? 'blue' : 'red';
 }
 
+function computePlacementCells(start: Coord, end: Coord, size: number, boardSize: number): Coord[] | null {
+  let dx = end.y - start.y;
+  let dy = end.x - start.x;
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    dy = 0;
+    dx = dx === 0 ? 1 : dx > 0 ? 1 : -1;
+  } else {
+    dx = 0;
+    dy = dy === 0 ? 1 : dy > 0 ? 1 : -1;
+  }
+
+  const cells: Coord[] = [];
+  for (let i = 0; i < size; i++) {
+    const x = start.x + dy * i;
+    const y = start.y + dx * i;
+    if (!isWithinBoard({ x, y }, boardSize)) return null;
+    cells.push({ x, y });
+  }
+  return cells;
+}
+
 export function canMakeMove(gameState: TorpedoGameState, moveData: TorpedoMoveData, player: Player): boolean {
   if (gameState.winner || !gameState.gameStarted) return false;
 
@@ -82,20 +79,16 @@ export function canMakeMove(gameState: TorpedoGameState, moveData: TorpedoMoveDa
     const remaining = gameState.availableShips.filter(
       (size) => !gameState.shipsPlaced[player].some((s) => s.size === size)
     );
-    const requestedSize =
-      Math.max(Math.abs(moveData.end.x - moveData.start.x), Math.abs(moveData.end.y - moveData.start.y)) + 1;
+    const requestedSize = moveData.size;
     if (!remaining.includes(requestedSize)) return false;
-    const placement: ShipPlacement = {
-      id: `${player}-${requestedSize}-${gameState.shipsPlaced[player].length + 1}`,
-      size: requestedSize,
-      start: moveData.start,
-      end: moveData.end,
-      cells: getCellsBetween(moveData.start, moveData.end)
-    };
-    const cloneBoard: TorpedoBoard = {
-      grid: gameState.boards[player].grid.map((row) => row.map((c) => ({ ...c })))
-    };
-    return canPlaceShip(cloneBoard, placement, gameState.boardSize);
+
+    const cells = computePlacementCells(moveData.start, moveData.end, requestedSize, gameState.boardSize);
+    if (!cells) return false;
+
+    for (const c of cells) {
+      if (gameState.boards[player].grid[c.x][c.y].hasShip) return false;
+    }
+    return true;
   }
 
   if (moveData.type === 'fire') {
@@ -134,14 +127,19 @@ export function makeMove(gameState: TorpedoGameState, moveData: TorpedoMoveData,
   };
 
   if (moveData.type === 'placeShip') {
-    const length =
-      Math.max(Math.abs(moveData.end.x - moveData.start.x), Math.abs(moveData.end.y - moveData.start.y)) + 1;
+    const length = moveData.size;
+    const cells = computePlacementCells(moveData.start, moveData.end, length, newState.boardSize);
+    if (!cells) {
+      debugLog('Torpedo makeMove: invalid placement cells', moveData);
+      return gameState;
+    }
+
     const placement: ShipPlacement = {
       id: `${player}-${length}-${newState.shipsPlaced[player].length + 1}`,
       size: length,
       start: moveData.start,
       end: moveData.end,
-      cells: getCellsBetween(moveData.start, moveData.end)
+      cells
     };
 
     placeShip(newState.boards[player], placement);
