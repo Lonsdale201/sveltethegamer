@@ -161,10 +161,10 @@
       <div class="board" style={`--cols:${boardSize};`}>
         <div class="corner"></div>
         {#each Array(boardSize) as _, idx}
-          <div class="label top">{idx + 1}</div>
+          <div class="label top">{letters[idx]}</div>
         {/each}
         {#each Array(boardSize) as _, row}
-          <div class="label left">{letters[row]}</div>
+          <div class="label left">{row + 1}</div>
           {#each Array(boardSize) as _, col}
             <div
               class="cell enemy-cell {col === boardSize - 1 ? 'last-col' : ''} {row === boardSize - 1 ? 'last-row' : ''}"
@@ -184,7 +184,7 @@
       <div class="board" style={`--cols:${boardSize};`}>
         <div class="corner"></div>
         {#each Array(boardSize) as _, idx}
-          <div class="label top">{letters[idx] || idx + 1}</div>
+          <div class="label top">{letters[idx]}</div>
         {/each}
         {#each Array(boardSize) as _, row}
           <div class="label left">{row + 1}</div>
@@ -348,13 +348,13 @@
   }
   .ship {
     position: absolute;
-    inset: 6px;
-    border: 2px solid rgba(59,130,246,0.8);
-    background: rgba(59,130,246,0.18);
-    border-radius: 6px;
+    inset: 3px;
+    border: 2px solid #0f766e;
+    background: #14b8a6;
+    border-radius: 4px;
   }
-  .ship.red { border-color: rgba(239,68,68,0.8); background: rgba(239,68,68,0.18); }
-  .ship.blue { border-color: rgba(59,130,246,0.8); background: rgba(59,130,246,0.18); }
+  .ship.red { border-color: #dc2626; background: #f87171; }
+  .ship.blue { border-color: #2563eb; background: #93c5fd; }
   .hit-marker {
     position: absolute;
     inset: 10px;
