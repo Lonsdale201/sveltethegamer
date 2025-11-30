@@ -38,6 +38,7 @@ export interface BrainstormingGameState extends BaseGameState {
     targetScore: number;
     language: Language;
     topics?: BrainstormingTopic[];
+    questionSeed?: number;
   };
 }
 
@@ -61,7 +62,8 @@ export const initialBrainstormingGameState: BrainstormingGameState = {
   gameSettings: {
     targetScore: 10,
     language: 'HU',
-    topics: undefined
+    topics: undefined,
+    questionSeed: undefined
   },
   gameStarted: false,
   currentTurn: 'red',

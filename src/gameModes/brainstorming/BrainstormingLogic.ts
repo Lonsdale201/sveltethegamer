@@ -161,8 +161,9 @@ export function resetGame(gameSettings: GameSettings): BrainstormingGameState {
   const language = gameSettings.brainstormingSettings?.language ?? 'HU';
   const targetScore = gameSettings.brainstormingSettings?.targetScore ?? 10;
   const topics = gameSettings.brainstormingSettings?.topics;
-  
-  const questions = getQuestionsByLanguage(language, topics);
+  const questionSeed = gameSettings.brainstormingSettings?.questionSeed ?? Date.now();
+
+  const questions = getQuestionsByLanguage(language, topics, questionSeed);
   const now = Date.now();
   
   return {
@@ -178,7 +179,8 @@ export function resetGame(gameSettings: GameSettings): BrainstormingGameState {
     gameSettings: {
       targetScore,
       language,
-      topics
+      topics,
+      questionSeed
     },
     gameStarted: true,
     currentTurn: 'red',

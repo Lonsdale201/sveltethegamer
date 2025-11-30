@@ -45,6 +45,7 @@ export interface GameSettings {
     targetScore: number;
     language: 'HU' | 'EN';
     topics?: string[];
+    questionSeed?: number;
   };
 }
 

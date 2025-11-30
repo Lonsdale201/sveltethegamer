@@ -89,7 +89,8 @@
       settings.brainstormingSettings = {
         targetScore: brainstormingTargetScore,
         language: brainstormingLanguage,
-        topics: [...selectedTopics]
+        topics: [...selectedTopics],
+        questionSeed: Date.now()
       };
     }
     

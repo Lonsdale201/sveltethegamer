@@ -81,7 +81,7 @@ function interleaveByTopics(questions: Question[], topics: BrainstormingTopic[],
   return result;
 }
 
-export function getQuestionsByLanguage(language: Language, topics?: string[]): Question[] {
+export function getQuestionsByLanguage(language: Language, topics?: string[], seed?: number): Question[] {
   let topicSelection: BrainstormingTopic[] =
     topics && topics.length
       ? (topics.filter((t) => brainstormingTopics.some((topic) => topic.id === t)) as BrainstormingTopic[])
@@ -95,7 +95,7 @@ export function getQuestionsByLanguage(language: Language, topics?: string[]): Q
     (q) => q.language === language && q.tags.some((tag) => topicSelection.includes(tag))
   );
 
-  const sessionSeed = generateSessionSeed();
+  const sessionSeed = seed ?? generateSessionSeed();
   return interleaveByTopics(filtered, topicSelection, sessionSeed);
 }
 
