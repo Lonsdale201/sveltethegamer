@@ -84,7 +84,7 @@
     <div class="board-panel enemy">
       <h3>Enemy Waters</h3>
       <div class="board">
-        <div class="labels top">
+        <div class="labels top" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
           <div class="corner"></div>
           {#each Array(boardSize) as _, idx}
             <div class="label">{idx + 1}</div>
@@ -92,19 +92,17 @@
         </div>
         <div class="rows">
           {#each Array(boardSize) as _, row}
-            <div class="row">
+            <div class="row" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
               <div class="label left">{letters[row]}</div>
               {#each Array(boardSize) as _, col}
-                {#if true}
-                  <div
-                    class="cell enemy-cell"
-                    on:click={() => handleEnemyCellClick(row, col)}
-                  >
-                    {#if shotStatusOnEnemy(row, col)}
-                      <span class:hit={shotStatusOnEnemy(row, col)?.hit} class:miss={!shotStatusOnEnemy(row, col)?.hit}></span>
-                    {/if}
-                  </div>
-                {/if}
+                <div
+                  class="cell enemy-cell"
+                  on:click={() => handleEnemyCellClick(row, col)}
+                >
+                  {#if shotStatusOnEnemy(row, col)}
+                    <span class:hit={shotStatusOnEnemy(row, col)?.hit} class:miss={!shotStatusOnEnemy(row, col)?.hit}></span>
+                  {/if}
+                </div>
               {/each}
             </div>
           {/each}
@@ -115,7 +113,7 @@
     <div class="board-panel own">
       <h3>Your Fleet</h3>
       <div class="board">
-        <div class="labels top">
+        <div class="labels top" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
           <div class="corner"></div>
           {#each Array(boardSize) as _, idx}
             <div class="label">{idx + 1}</div>
@@ -123,7 +121,7 @@
         </div>
         <div class="rows">
           {#each Array(boardSize) as _, row}
-            <div class="row">
+            <div class="row" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
               <div class="label left">{letters[row]}</div>
               {#each Array(boardSize) as _, col}
                 <div
@@ -259,13 +257,24 @@
     background: transparent;
     position: relative;
     cursor: pointer;
-    border: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
   }
   .cell:hover {
     background: transparent;
   }
   .enemy-cell {
     background: transparent;
+  }
+  .rows {
+    border-top: 1px solid #cbd5e1;
+    border-left: 1px solid #cbd5e1;
+  }
+  .row:last-child .cell {
+    border-bottom: 1px solid #cbd5e1;
+  }
+  .cell:last-child {
+    border-right: 1px solid #cbd5e1;
   }
   .ship {
     position: absolute;
