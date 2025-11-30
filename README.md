@@ -759,4 +759,5 @@ For questions, issues, or contributions:
 ## Changelog (2025.11.30)
 - Brainstorming: bevezetett témarendszer, témánkénti kérdésfájlok, közös seeddel szinkronizált kérdéssorrend.
 - Color Duel: állítható nyerősor-hossz; alapértelmezés 3x3 → 3, 4x4 → 4, 5x5 → 4 (min. 3, max. pályaméret).
+- Torpedo: új játékmód (klasszikus torpedó) – egyenként 2/3/4/5/6 mezős hajók, 20s felkészülési idő, ellenfél mezőire kattintva lőhetsz.
 

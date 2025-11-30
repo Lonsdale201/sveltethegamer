@@ -48,6 +48,10 @@ export interface GameSettings {
     topics?: string[];
     questionSeed?: number;
   };
+  torpedoSettings?: {
+    boardSize?: number;
+    prepTimeLimit?: number;
+  };
 }
 
 export interface GameMode {
