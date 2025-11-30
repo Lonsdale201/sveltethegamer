@@ -22,9 +22,11 @@
 
   $: opponentColor = myColor === 'red' ? 'blue' : 'red';
   $: boardSize = gameState.boardSize;
-  $: availableShips = gameState.availableShips.filter(
-    (s) => !gameState.shipsPlaced[myColor].some((p) => p.size === s)
-  );
+  function shipAllowance(size: number): { allowed: number; placed: number; remaining: number } {
+    const allowed = gameState.availableShips.filter((s) => s === size).length;
+    const placed = gameState.shipsPlaced[myColor].filter((p) => p.size === size).length;
+    return { allowed, placed, remaining: Math.max(0, allowed - placed) };
+  }
   $: phase = gameState.phase;
 
   function selectShip(size: number) {
@@ -210,13 +212,13 @@
         <div class="shipyard">
           <div class="shipyard-title">Hajók (kattints, majd rakd le a pályára)</div>
           <div class="ship-list">
-            {#each gameState.availableShips as size}
-              {#if !gameState.shipsPlaced[myColor].some((s) => s.size === size)}
+            {#each [...new Set(gameState.availableShips)] as size}
+              {#if shipAllowance(size).remaining > 0}
                 <button
                   class="ship-btn {selectedShipSize === size ? 'selected' : ''}"
                   on:click={() => selectShip(size)}
                 >
-                  <span>{size} hosszú</span>
+                  <span>{size} hosszú (marad: {shipAllowance(size).remaining})</span>
                   <span class="ship-cells">
                     {#each Array(size) as _, i}
                       <span></span>

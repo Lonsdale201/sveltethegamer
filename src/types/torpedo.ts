@@ -54,7 +54,8 @@ export const initialTorpedoGameState: TorpedoGameState = {
     blue: { grid: Array.from({ length: 10 }, () => Array.from({ length: 10 }, () => ({ hasShip: false, hit: false }))) }
   },
   shipsPlaced: { red: [], blue: [] },
-  availableShips: [2, 3, 4, 5, 6],
+  // multiset: két 2-es, két 3-as, egy 4-5-6
+  availableShips: [2, 2, 3, 3, 4, 5, 6],
   shotsFired: { red: [], blue: [] },
   prepTimeLimit: 20,
   prepStartTime: 0,

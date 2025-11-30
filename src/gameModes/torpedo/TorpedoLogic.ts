@@ -71,14 +71,23 @@ function computePlacementCells(start: Coord, end: Coord, size: number, boardSize
   return cells;
 }
 
+function getRemainingShips(available: number[], placed: ShipPlacement[]): number[] {
+  const remaining = [...available];
+  for (const ship of placed) {
+    const idx = remaining.indexOf(ship.size);
+    if (idx !== -1) {
+      remaining.splice(idx, 1);
+    }
+  }
+  return remaining;
+}
+
 export function canMakeMove(gameState: TorpedoGameState, moveData: TorpedoMoveData, player: Player): boolean {
   if (gameState.winner || !gameState.gameStarted) return false;
 
   if (moveData.type === 'placeShip') {
     if (gameState.phase !== 'placement') return false;
-    const remaining = gameState.availableShips.filter(
-      (size) => !gameState.shipsPlaced[player].some((s) => s.size === size)
-    );
+    const remaining = getRemainingShips(gameState.availableShips, gameState.shipsPlaced[player]);
     const requestedSize =
       moveData.size ?? Math.max(Math.abs(moveData.end.x - moveData.start.x), Math.abs(moveData.end.y - moveData.start.y)) + 1;
     if (!remaining.includes(requestedSize)) return false;
