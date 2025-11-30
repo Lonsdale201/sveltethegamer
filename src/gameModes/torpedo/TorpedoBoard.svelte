@@ -241,6 +241,11 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    position: relative;
+    background:
+      repeating-linear-gradient(90deg, #cbd5e1 0, #cbd5e1 1px, transparent 1px, transparent 28px),
+      repeating-linear-gradient(0deg, #cbd5e1 0, #cbd5e1 1px, transparent 1px, transparent 28px);
+    padding: 2px;
   }
   .row {
     display: grid;
@@ -256,13 +261,12 @@
   .cell {
     width: 28px;
     height: 28px;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
+    background: transparent;
     position: relative;
     cursor: pointer;
   }
   .cell:hover {
-    background: #e2e8f0;
+    background: rgba(59, 130, 246, 0.08);
   }
   .enemy-cell {
     background: #fff7ed;

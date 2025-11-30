@@ -31,7 +31,7 @@ function getCellsBetween(start: Coord, end: Coord): Coord[] {
   const cells: Coord[] = [];
   const dx = Math.sign(end.x - start.x);
   const dy = Math.sign(end.y - start.y);
-  const length = Math.abs(end.x - start.x + end.y - start.y) + 1;
+  const length = Math.max(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) + 1;
   for (let i = 0; i < length; i++) {
     cells.push({ x: start.x + dx * i, y: start.y + dy * i });
   }
@@ -82,7 +82,8 @@ export function canMakeMove(gameState: TorpedoGameState, moveData: TorpedoMoveDa
     const remaining = gameState.availableShips.filter(
       (size) => !gameState.shipsPlaced[player].some((s) => s.size === size)
     );
-    const requestedSize = Math.abs(moveData.end.x - moveData.start.x + moveData.end.y - moveData.start.y) + 1;
+    const requestedSize =
+      Math.max(Math.abs(moveData.end.x - moveData.start.x), Math.abs(moveData.end.y - moveData.start.y)) + 1;
     if (!remaining.includes(requestedSize)) return false;
     const placement: ShipPlacement = {
       id: `${player}-${requestedSize}-${gameState.shipsPlaced[player].length + 1}`,
@@ -133,11 +134,11 @@ export function makeMove(gameState: TorpedoGameState, moveData: TorpedoMoveData,
   };
 
   if (moveData.type === 'placeShip') {
+    const length =
+      Math.max(Math.abs(moveData.end.x - moveData.start.x), Math.abs(moveData.end.y - moveData.start.y)) + 1;
     const placement: ShipPlacement = {
-      id: `${player}-${Math.abs(moveData.end.x - moveData.start.x + moveData.end.y - moveData.start.y) + 1}-${
-        newState.shipsPlaced[player].length + 1
-      }`,
-      size: Math.abs(moveData.end.x - moveData.start.x + moveData.end.y - moveData.start.y) + 1,
+      id: `${player}-${length}-${newState.shipsPlaced[player].length + 1}`,
+      size: length,
       start: moveData.start,
       end: moveData.end,
       cells: getCellsBetween(moveData.start, moveData.end)
