@@ -3,17 +3,14 @@ import ColorDuelBoard from './colorDuel/ColorDuelBoard.svelte';
 import TowerWarBoard from './towerWar/TowerWarBoard.svelte';
 import ShadowCodeBoard from './shadowCode/ShadowCodeBoard.svelte';
 import BrainstormingBoard from './brainstorming/BrainstormingBoard.svelte';
-import TorpedoBoard from './torpedo/TorpedoBoard.svelte';
 import * as ColorDuelLogic from './colorDuel/ColorDuelLogic';
 import * as TowerWarLogic from './towerWar/TowerWarLogic';
 import * as ShadowCodeLogic from './shadowCode/ShadowCodeLogic';
 import * as BrainstormingLogic from './brainstorming/BrainstormingLogic';
-import * as TorpedoLogic from './torpedo/TorpedoLogic';
 import { initialColorDuelGameState } from '../types/colorDuel';
 import { initialTowerWarGameState } from '../types/towerWar';
 import { initialShadowCodeGameState } from '../types/shadowCode';
 import { initialBrainstormingGameState } from '../types/brainstorming';
-import { initialTorpedoGameState } from '../types/torpedo';
 
 export const gameModes: GameMode[] = [
   {
@@ -118,27 +115,6 @@ export const gameModes: GameMode[] = [
           return topics && topics.length ? topics.join(', ') : 'All topics';
         },
         icon: '📚'
-      }
-    }
-  },
-  {
-    id: 'torpedo',
-    name: 'Torpedo',
-    description: 'Classic battleship duel with simultaneous placement and turn-based firing',
-    component: TorpedoBoard,
-    initialState: () => ({ ...initialTorpedoGameState }),
-    gameLogic: TorpedoLogic,
-    turnMode: 'sequential',
-    settingsDisplay: {
-      turnTimer: {
-        label: 'Turn Timer',
-        getValue: (settings) => (settings.turnTimeLimit === 0 ? 'Unlimited' : `${settings.turnTimeLimit}s`),
-        icon: '⏱️'
-      },
-      prepTime: {
-        label: 'Prep Time',
-        getValue: (settings) => `${settings.torpedoSettings?.prepTimeLimit ?? 20}s`,
-        icon: '🛠️'
       }
     }
   }

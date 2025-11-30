@@ -23,7 +23,6 @@
   let colorDuelBoardSize = 3;
   let colorDuelStealsPerPlayer = 1;
   let colorDuelWinLength = 3;
-  let torpedoPrepTime = 20;
   let activeTab = 'color-duel';
   let nameInputFocused = false;
   let canShare = false;
@@ -105,13 +104,6 @@
       };
     }
 
-    // Add Torpedo specific settings if that mode is selected
-    if (selectedGameMode === 'torpedo') {
-      settings.torpedoSettings = {
-        boardSize: 10,
-        prepTimeLimit: torpedoPrepTime
-      };
-    }
     
     gameManager.setGameSettings(settings);
     gameManager.createRoom();
@@ -509,12 +501,6 @@
             {:else}
               Recommended: 4 in a row for faster games, 5 for longer battles.
             {/if}
-          </p>
-        </div>
-      {:else if selectedGameMode === 'torpedo'}
-        <div class="torpedo-setting">
-          <p class="setting-description">
-            Prep time: {torpedoPrepTime}s. Board: 10x10. One ship of sizes 2,3,4,5,6.
           </p>
         </div>
       {/if}

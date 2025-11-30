@@ -13,10 +13,9 @@
   import type { TowerWarGameState, TowerWarMoveData } from './types/towerWar';
   import type { ShadowCodeGameState, ShadowCodeMoveData } from './types/shadowCode';
   import type { BrainstormingGameState, BrainstormingMoveData } from './types/brainstorming';
-  import type { TorpedoGameState, TorpedoMoveData } from './types/torpedo';
 
   let gameManager: GameManager | null = null;
-  let gameState: ColorDuelGameState | TowerWarGameState | ShadowCodeGameState | BrainstormingGameState | TorpedoGameState;
+  let gameState: ColorDuelGameState | TowerWarGameState | ShadowCodeGameState | BrainstormingGameState;
   let gradientCanvas: HTMLCanvasElement;
   let granim: any;
   let turnTimer: number | null = null;
@@ -162,9 +161,6 @@
         } else if (gameSettings.gameMode === 'brainstorming') {
           const moveData: BrainstormingMoveData = message.data;
           gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
-        } else if (gameSettings.gameMode === 'torpedo') {
-          const moveData: TorpedoMoveData = message.data;
-          gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
         }
         
         debugLog('App handleGameMessage move - gameState after makeMove:', gameState);
@@ -255,16 +251,6 @@
             type: 'move',
             data: moveData
           });
-        }
-      }
-    } else if (gameSettings.gameMode === 'torpedo') {
-      const moveData: TorpedoMoveData = event.detail;
-      if (currentGameMode.gameLogic.canMakeMove(gameState, moveData, myColor)) {
-        const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
-        if (newGameState !== gameState) {
-          gameState = newGameState;
-          startTurnTimer();
-          gameManager.sendMessage({ type: 'move', data: moveData });
         }
       }
     }
