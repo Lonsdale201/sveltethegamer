@@ -13,7 +13,10 @@
   const dispatch = createEventDispatcher();
 
   let selectedShipSize: number | null = null;
-  let firstCoord: Coord | null = null;
+  let placementStart: Coord | null = null;
+  let previewCoords: Coord[] = [];
+  let previewInvalid = false;
+  let statusText = 'Válassz egy hajót, kattints a pályán a kezdeti cellára, majd a végpontra.';
 
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -26,21 +29,89 @@
 
   function selectShip(size: number) {
     selectedShipSize = size;
-    firstCoord = null;
+    placementStart = null;
+    previewCoords = [];
+    previewInvalid = false;
+    statusText = `Kiválasztott hajó: ${size} hosszú. Kattints a pályán a hajó elejére.`;
+  }
+
+  function hasShip(x: number, y: number, player: Player) {
+    return gameState.boards[player]?.grid?.[x]?.[y]?.hasShip;
+  }
+
+  function getCellsForPlacement(start: Coord, end: Coord, size: number): Coord[] | null {
+    let dx = end.y - start.y;
+    let dy = end.x - start.x;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      dy = 0;
+      dx = dx === 0 ? 1 : dx > 0 ? 1 : -1;
+    } else {
+      dx = 0;
+      dy = dy === 0 ? 1 : dy > 0 ? 1 : -1;
+    }
+
+    const cells: Coord[] = [];
+    for (let i = 0; i < size; i++) {
+      const cx = start.x + dy * i;
+      const cy = start.y + dx * i;
+      if (cx < 0 || cx >= boardSize || cy < 0 || cy >= boardSize) return null;
+      cells.push({ x: cx, y: cy });
+    }
+    return cells;
+  }
+
+  function isPlacementValid(cells: Coord[] | null): boolean {
+    if (!cells) return false;
+    for (const c of cells) {
+      if (hasShip(c.x, c.y, myColor)) return false;
+    }
+    return true;
   }
 
   function handleOwnCellClick(x: number, y: number) {
     if (phase !== 'placement') return;
-    if (!selectedShipSize) return;
+    if (!selectedShipSize) {
+      statusText = 'Először válassz egy hajót alul.';
+      return;
+    }
 
-    if (!firstCoord) {
-      firstCoord = { x, y };
-    } else {
-      const second: Coord = { x, y };
-      const move: TorpedoMoveData = { type: 'placeShip', start: firstCoord, end: second, player: myColor };
-      dispatch('move', move);
-      firstCoord = null;
-      selectedShipSize = null;
+    if (!placementStart) {
+      placementStart = { x, y };
+      previewCoords = [];
+      previewInvalid = false;
+      statusText = 'Mozgasd az egeret a hajó irányába, majd kattints a végpontra.';
+      return;
+    }
+
+    const end: Coord = { x, y };
+    const cells = getCellsForPlacement(placementStart, end, selectedShipSize);
+    const valid = isPlacementValid(cells);
+    if (!valid || !cells) {
+      statusText = 'Érvénytelen pozíció: ne lógjon le és ne ütközzön más hajóval.';
+      return;
+    }
+
+    const move: TorpedoMoveData = { type: 'placeShip', start: placementStart, end, player: myColor };
+    dispatch('move', move);
+    placementStart = null;
+    previewCoords = [];
+    previewInvalid = false;
+    selectedShipSize = null;
+    statusText = 'Hajó lerakva. Válassz egy újabb hajót.';
+  }
+
+  function handleOwnCellHover(x: number, y: number) {
+    if (phase !== 'placement' || !selectedShipSize || !placementStart) return;
+    const end: Coord = { x, y };
+    const cells = getCellsForPlacement(placementStart, end, selectedShipSize);
+    previewCoords = cells || [];
+    previewInvalid = !isPlacementValid(cells);
+  }
+
+  function handleOwnLeave() {
+    if (!placementStart) {
+      previewCoords = [];
+      previewInvalid = false;
     }
   }
 
@@ -62,6 +133,10 @@
   function shotStatusOnEnemy(x: number, y: number) {
     return gameState.shotsFired[myColor].find((s) => s.x === x && s.y === y);
   }
+
+  function isPreviewCell(x: number, y: number) {
+    return previewCoords.some((c) => c.x === x && c.y === y);
+  }
 </script>
 
 <div class="torpedo-wrapper">
@@ -82,7 +157,7 @@
 
   <div class="boards">
     <div class="board-panel enemy">
-      <h3>Enemy Waters</h3>
+      <div class="board-title">Ellenfél</div>
       <div class="board" style={`--cols:${boardSize};`}>
         <div class="corner"></div>
         {#each Array(boardSize) as _, idx}
@@ -105,18 +180,20 @@
     </div>
 
     <div class="board-panel own">
-      <h3>Your Fleet</h3>
+      <div class="board-title">Saját pálya</div>
       <div class="board" style={`--cols:${boardSize};`}>
         <div class="corner"></div>
         {#each Array(boardSize) as _, idx}
-          <div class="label top">{idx + 1}</div>
+          <div class="label top">{letters[idx] || idx + 1}</div>
         {/each}
         {#each Array(boardSize) as _, row}
-          <div class="label left">{letters[row]}</div>
+          <div class="label left">{row + 1}</div>
           {#each Array(boardSize) as _, col}
             <div
-              class="cell own-cell {col === boardSize - 1 ? 'last-col' : ''} {row === boardSize - 1 ? 'last-row' : ''}"
+              class="cell own-cell {col === boardSize - 1 ? 'last-col' : ''} {row === boardSize - 1 ? 'last-row' : ''} {isPreviewCell(row,col) ? (previewInvalid ? 'preview-invalid' : 'preview') : ''} {placementStart && placementStart.x === row && placementStart.y === col ? 'start' : ''}"
               on:click={() => handleOwnCellClick(row, col)}
+              on:mousemove={() => handleOwnCellHover(row, col)}
+              on:mouseleave={handleOwnLeave}
             >
               {#if cellShipOwner(row, col, myColor)}
                 <div class="ship {myColor}"></div>
@@ -130,22 +207,35 @@
       </div>
 
       {#if phase === 'placement'}
-        <div class="ships">
-          <h4>Select ship size, then click start and end cells</h4>
+        <div class="shipyard">
+          <div class="shipyard-title">Hajók (kattints, majd rakd le a pályára)</div>
           <div class="ship-list">
             {#each gameState.availableShips as size}
-              <button
-                class:selected={selectedShipSize === size}
-                disabled={gameState.shipsPlaced[myColor].some((s) => s.size === size)}
-                on:click={() => selectShip(size)}
-              >
-                {size}-cell ship
-              </button>
+              {#if !gameState.shipsPlaced[myColor].some((s) => s.size === size)}
+                <button
+                  class="ship-btn {selectedShipSize === size ? 'selected' : ''}"
+                  on:click={() => selectShip(size)}
+                >
+                  <span>{size} hosszú</span>
+                  <span class="ship-cells">
+                    {#each Array(size) as _, i}
+                      <span></span>
+                    {/each}
+                  </span>
+                </button>
+              {:else}
+                <button class="ship-btn used" disabled>
+                  <span>{size} hosszú</span>
+                  <span class="ship-cells">
+                    {#each Array(size) as _, i}
+                      <span></span>
+                    {/each}
+                  </span>
+                </button>
+              {/if}
             {/each}
           </div>
-          {#if firstCoord}
-            <div class="hint">Select end cell for size {selectedShipSize}</div>
-          {/if}
+          <div class="status-text">{statusText}</div>
         </div>
       {/if}
     </div>
@@ -238,6 +328,18 @@
   .enemy-cell {
     background: #fff;
   }
+  .preview {
+    background: rgba(37,99,235,0.15);
+    box-shadow: inset 0 0 0 2px rgba(37,99,235,0.35);
+  }
+  .preview-invalid {
+    background: rgba(185,28,28,0.15);
+    box-shadow: inset 0 0 0 2px rgba(185,28,28,0.35);
+  }
+  .start {
+    outline: 2px dashed #f59e0b;
+    outline-offset: -4px;
+  }
   .cell.last-col {
     border-right: 1px solid #d1d5db;
   }
@@ -267,38 +369,72 @@
   }
   .enemy-cell span.hit { background: #dc2626; }
   .enemy-cell span.miss { background: #cbd5e1; opacity: 0.8; }
-  .ships {
-    margin-top: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  .shipyard {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem 1rem;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+  }
+  .shipyard-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #475569;
+    margin-bottom: 0.6rem;
   }
   .ship-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  .ship-list button {
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
+  .ship-btn {
+    border-radius: 999px;
     border: 1px solid #cbd5e1;
-    cursor: pointer;
-    background: #fff;
+    background: #f8fafc;
     color: #0f172a;
-    transition: all 0.15s ease;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease, border-color 0.12s ease;
   }
-  .ship-list button.selected {
+  .ship-btn:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  }
+  .ship-btn.selected {
     border-color: #2563eb;
     box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
     background: #e0f2fe;
   }
-  .ship-list button:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
+  .ship-btn.used {
+    opacity: 0.4;
+    cursor: default;
+    box-shadow: none;
+    border-style: dashed;
+    background: #f1f5f9;
   }
-  .hint {
-    font-size: 0.9rem;
-    color: #2563eb;
+  .ship-cells {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 0.8rem;
+    height: 0.8rem;
+  }
+  .ship-cells span {
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 0.15rem;
+    background: #0f766e;
+    border: 1px solid #14b8a6;
+  }
+  .status-text {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #475569;
   }
   @media (max-width: 960px) {
     .boards {
