@@ -240,17 +240,12 @@
   .rows {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    position: relative;
-    background:
-      repeating-linear-gradient(90deg, #cbd5e1 0, #cbd5e1 1px, transparent 1px, transparent 28px),
-      repeating-linear-gradient(0deg, #cbd5e1 0, #cbd5e1 1px, transparent 1px, transparent 28px);
-    padding: 2px;
+    gap: 0;
   }
   .row {
     display: grid;
-    grid-template-columns: repeat(11, 1fr);
-    gap: 2px;
+    grid-template-columns: repeat(11, 30px);
+    gap: 0;
     align-items: center;
   }
   .row .label.left {
@@ -259,17 +254,18 @@
     color: #475569;
   }
   .cell {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     background: transparent;
     position: relative;
     cursor: pointer;
+    border: 2px solid #cbd5e1;
   }
   .cell:hover {
-    background: rgba(59, 130, 246, 0.08);
+    background: transparent;
   }
   .enemy-cell {
-    background: #fff7ed;
+    background: transparent;
   }
   .ship {
     position: absolute;
