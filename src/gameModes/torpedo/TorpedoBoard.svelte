@@ -156,22 +156,24 @@
   .torpedo-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.25rem;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    color: #0f172a;
   }
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
   .status {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    font-weight: 600;
   }
   .players {
     display: flex;
@@ -182,14 +184,9 @@
     padding: 0.4rem 0.75rem;
     border-radius: 12px;
     font-weight: 600;
-  }
-  .player-tag.you {
-    background: #e0f2fe;
-    color: #075985;
-  }
-  .player-tag.opp {
-    background: #fee2e2;
-    color: #991b1b;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
   }
   .boards {
     display: grid;
@@ -197,74 +194,79 @@
     gap: 1rem;
   }
   .board-panel {
-    background: #fff;
+    background: #f9fafb;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     padding: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
   }
   .board {
+    --cell: 40px;
+    --label: 32px;
     display: grid;
-    grid-template-columns: 24px repeat(var(--cols), 30px);
-    grid-auto-rows: 30px;
+    grid-template-columns: var(--label) repeat(var(--cols), var(--cell));
+    grid-auto-rows: var(--cell);
     gap: 0;
-    border-top: 1px solid #cbd5e1;
-    border-left: 1px solid #cbd5e1;
+    border-top: 1px solid #d1d5db;
+    border-left: 1px solid #d1d5db;
+    background: #fff;
   }
   .corner {
-    width: 24px;
-    height: 30px;
+    width: var(--label);
+    height: var(--cell);
   }
   .label {
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #475569;
-    line-height: 30px;
+    line-height: var(--cell);
   }
   .cell {
-    width: 30px;
-    height: 30px;
-    background: transparent;
+    width: var(--cell);
+    height: var(--cell);
+    background: #f8fafc;
     position: relative;
     cursor: pointer;
-    border-right: 1px solid #cbd5e1;
-    border-bottom: 1px solid #cbd5e1;
+    border-right: 1px solid #d1d5db;
+    border-bottom: 1px solid #d1d5db;
+    transition: background 0.12s ease, transform 0.1s ease;
   }
   .cell:hover {
-    background: transparent;
+    background: #e0e7ff;
+    transform: translateY(-1px);
   }
   .enemy-cell {
-    background: transparent;
+    background: #fff;
   }
   .cell.last-col {
-    border-right: 1px solid #cbd5e1;
+    border-right: 1px solid #d1d5db;
   }
   .cell.last-row {
-    border-bottom: 1px solid #cbd5e1;
+    border-bottom: 1px solid #d1d5db;
   }
   .ship {
     position: absolute;
-    inset: 3px;
+    inset: 6px;
     border: 2px solid rgba(59,130,246,0.8);
-    background: rgba(59,130,246,0.2);
-    border-radius: 4px;
+    background: rgba(59,130,246,0.18);
+    border-radius: 6px;
   }
-  .ship.red { border-color: rgba(239,68,68,0.8); background: rgba(239,68,68,0.2); }
-  .ship.blue { border-color: rgba(59,130,246,0.8); background: rgba(59,130,246,0.2); }
+  .ship.red { border-color: rgba(239,68,68,0.8); background: rgba(239,68,68,0.18); }
+  .ship.blue { border-color: rgba(59,130,246,0.8); background: rgba(59,130,246,0.18); }
   .hit-marker {
     position: absolute;
-    inset: 8px;
+    inset: 10px;
     border-radius: 999px;
     background: #dc2626;
   }
   .enemy-cell span {
     position: absolute;
-    inset: 8px;
+    inset: 10px;
     border-radius: 999px;
     background: #94a3b8;
   }
   .enemy-cell span.hit { background: #dc2626; }
-  .enemy-cell span.miss { background: #94a3b8; opacity: 0.6; }
+  .enemy-cell span.miss { background: #cbd5e1; opacity: 0.8; }
   .ships {
     margin-top: 1rem;
     display: flex;
@@ -281,7 +283,9 @@
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     cursor: pointer;
-    background: #f8fafc;
+    background: #fff;
+    color: #0f172a;
+    transition: all 0.15s ease;
   }
   .ship-list button.selected {
     border-color: #2563eb;
@@ -289,7 +293,7 @@
     background: #e0f2fe;
   }
   .ship-list button:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
   }
   .hint {
@@ -300,12 +304,9 @@
     .boards {
       grid-template-columns: 1fr;
     }
-    .labels.top, .row {
-      grid-template-columns: repeat(11, minmax(20px, 1fr));
-    }
-    .cell {
-      width: 24px;
-      height: 24px;
+    .board {
+      --cell: 32px;
+      --label: 28px;
     }
   }
 </style>
