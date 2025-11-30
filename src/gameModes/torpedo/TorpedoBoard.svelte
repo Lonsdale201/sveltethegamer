@@ -83,62 +83,50 @@
   <div class="boards">
     <div class="board-panel enemy">
       <h3>Enemy Waters</h3>
-      <div class="board">
-        <div class="labels top" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
-          <div class="corner"></div>
-          {#each Array(boardSize) as _, idx}
-            <div class="label">{idx + 1}</div>
-          {/each}
-        </div>
-        <div class="rows">
-          {#each Array(boardSize) as _, row}
-            <div class="row" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
-              <div class="label left">{letters[row]}</div>
-              {#each Array(boardSize) as _, col}
-                <div
-                  class="cell enemy-cell"
-                  on:click={() => handleEnemyCellClick(row, col)}
-                >
-                  {#if shotStatusOnEnemy(row, col)}
-                    <span class:hit={shotStatusOnEnemy(row, col)?.hit} class:miss={!shotStatusOnEnemy(row, col)?.hit}></span>
-                  {/if}
-                </div>
-              {/each}
+      <div class="board" style={`--cols:${boardSize};`}>
+        <div class="corner"></div>
+        {#each Array(boardSize) as _, idx}
+          <div class="label top">{idx + 1}</div>
+        {/each}
+        {#each Array(boardSize) as _, row}
+          <div class="label left">{letters[row]}</div>
+          {#each Array(boardSize) as _, col}
+            <div
+              class="cell enemy-cell {col === boardSize - 1 ? 'last-col' : ''} {row === boardSize - 1 ? 'last-row' : ''}"
+              on:click={() => handleEnemyCellClick(row, col)}
+            >
+              {#if shotStatusOnEnemy(row, col)}
+                <span class:hit={shotStatusOnEnemy(row, col)?.hit} class:miss={!shotStatusOnEnemy(row, col)?.hit}></span>
+              {/if}
             </div>
           {/each}
-        </div>
+        {/each}
       </div>
     </div>
 
     <div class="board-panel own">
       <h3>Your Fleet</h3>
-      <div class="board">
-        <div class="labels top" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
-          <div class="corner"></div>
-          {#each Array(boardSize) as _, idx}
-            <div class="label">{idx + 1}</div>
-          {/each}
-        </div>
-        <div class="rows">
-          {#each Array(boardSize) as _, row}
-            <div class="row" style={`grid-template-columns: 24px repeat(${boardSize}, 30px);`}>
-              <div class="label left">{letters[row]}</div>
-              {#each Array(boardSize) as _, col}
-                <div
-                  class="cell own-cell"
-                  on:click={() => handleOwnCellClick(row, col)}
-                >
-                  {#if cellShipOwner(row, col, myColor)}
-                    <div class="ship {myColor}"></div>
-                  {/if}
-                  {#if cellHit(row, col, myColor)}
-                    <div class="hit-marker"></div>
-                  {/if}
-                </div>
-              {/each}
+      <div class="board" style={`--cols:${boardSize};`}>
+        <div class="corner"></div>
+        {#each Array(boardSize) as _, idx}
+          <div class="label top">{idx + 1}</div>
+        {/each}
+        {#each Array(boardSize) as _, row}
+          <div class="label left">{letters[row]}</div>
+          {#each Array(boardSize) as _, col}
+            <div
+              class="cell own-cell {col === boardSize - 1 ? 'last-col' : ''} {row === boardSize - 1 ? 'last-row' : ''}"
+              on:click={() => handleOwnCellClick(row, col)}
+            >
+              {#if cellShipOwner(row, col, myColor)}
+                <div class="ship {myColor}"></div>
+              {/if}
+              {#if cellHit(row, col, myColor)}
+                <div class="hit-marker"></div>
+              {/if}
             </div>
           {/each}
-        </div>
+        {/each}
       </div>
 
       {#if phase === 'placement'}
@@ -217,39 +205,21 @@
   }
   .board {
     display: grid;
-    grid-template-rows: auto 1fr;
-    gap: 0.25rem;
+    grid-template-columns: 24px repeat(var(--cols), 30px);
+    grid-auto-rows: 30px;
+    gap: 0;
+    border-top: 1px solid #cbd5e1;
+    border-left: 1px solid #cbd5e1;
   }
-  .labels.top {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(24px, 1fr));
-    grid-template-columns: repeat(11, 1fr);
-    gap: 2px;
-    align-items: center;
-  }
-  .labels .corner {
+  .corner {
     width: 24px;
+    height: 30px;
   }
-  .labels .label {
+  .label {
     text-align: center;
     font-size: 0.8rem;
     color: #475569;
-  }
-  .rows {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  .row {
-    display: grid;
-    grid-template-columns: repeat(11, 30px);
-    gap: 0;
-    align-items: center;
-  }
-  .row .label.left {
-    text-align: center;
-    font-size: 0.8rem;
-    color: #475569;
+    line-height: 30px;
   }
   .cell {
     width: 30px;
@@ -266,15 +236,11 @@
   .enemy-cell {
     background: transparent;
   }
-  .rows {
-    border-top: 1px solid #cbd5e1;
-    border-left: 1px solid #cbd5e1;
-  }
-  .row:last-child .cell {
-    border-bottom: 1px solid #cbd5e1;
-  }
-  .cell:last-child {
+  .cell.last-col {
     border-right: 1px solid #cbd5e1;
+  }
+  .cell.last-row {
+    border-bottom: 1px solid #cbd5e1;
   }
   .ship {
     position: absolute;
