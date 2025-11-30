@@ -79,7 +79,8 @@ export function canMakeMove(gameState: TorpedoGameState, moveData: TorpedoMoveDa
     const remaining = gameState.availableShips.filter(
       (size) => !gameState.shipsPlaced[player].some((s) => s.size === size)
     );
-    const requestedSize = moveData.size;
+    const requestedSize =
+      moveData.size ?? Math.max(Math.abs(moveData.end.x - moveData.start.x), Math.abs(moveData.end.y - moveData.start.y)) + 1;
     if (!remaining.includes(requestedSize)) return false;
 
     const cells = computePlacementCells(moveData.start, moveData.end, requestedSize, gameState.boardSize);
@@ -127,7 +128,8 @@ export function makeMove(gameState: TorpedoGameState, moveData: TorpedoMoveData,
   };
 
   if (moveData.type === 'placeShip') {
-    const length = moveData.size;
+    const length =
+      moveData.size ?? Math.max(Math.abs(moveData.end.x - moveData.start.x), Math.abs(moveData.end.y - moveData.start.y)) + 1;
     const cells = computePlacementCells(moveData.start, moveData.end, length, newState.boardSize);
     if (!cells) {
       debugLog('Torpedo makeMove: invalid placement cells', moveData);
