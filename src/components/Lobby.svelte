@@ -254,7 +254,7 @@
 
 <div class="lobby">
   <div class="header">
-    <h1>🎮 Shadow Games</h1>
+    <h1>PeerJS Games</h1>
     <p>Battle your friend in strategic games!</p>
     {#if errorMessage}
       <div class="error-message">
