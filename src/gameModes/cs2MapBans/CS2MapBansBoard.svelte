@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { debugLog } from '../../config/debug';
-  import type { CS2MapBansGameState } from '../../types/cs2MapBans';
+  import type { CS2MapBansGameState, Side } from '../../types/cs2MapBans';
   import type { Player, PlayerInfo } from '../../types/core';
   import { canMakeMove } from './CS2MapBansLogic';
 
@@ -16,26 +16,39 @@
   let selectedMaps: string[] = [];
   let lastRound = -1;
 
-  $: requiredBans = gameState.bansPerRound[gameState.currentRound] ?? 0;
+  $: isBanPhase = gameState.phase === 'bans';
+  $: isSideSelection = gameState.phase === 'side-selection';
+  $: isComplete = gameState.phase === 'complete';
+  $: requiredBans = isBanPhase ? (gameState.bansPerRound[gameState.currentRound] ?? 0) : 0;
   $: bannedSet = new Set(gameState.bannedMaps.map((ban) => ban.name));
   $: availableMaps = gameState.maps.filter((map) => !bannedSet.has(map));
-  $: isMyTurn = gameState.currentTurn === myColor && !gameState.winner && !gameState.winningMap;
+  $: isMyTurn = gameState.currentTurn === myColor && !isComplete;
   $: opponentName = opponentInfo?.name || 'Opponent';
   $: currentBannerName = gameState.currentTurn === myColor ? (myPlayerInfo?.name || 'You') : opponentName;
   $: missingBans = Math.max(0, requiredBans - selectedMaps.length);
+  $: sideChooser = gameState.sideChoice.player;
+  $: sideSelected = gameState.sideChoice.side;
+  $: mySide = sideSelected && sideChooser
+    ? (myColor === sideChooser ? sideSelected : (sideSelected === 'CT' ? 'T' : 'CT'))
+    : null;
 
   $: if (gameState.currentRound !== lastRound) {
     selectedMaps = [];
     lastRound = gameState.currentRound;
   }
 
+  $: if (!isBanPhase && selectedMaps.length > 0) {
+    selectedMaps = [];
+  }
+
   $: selectedMaps = selectedMaps.filter((map) => !bannedSet.has(map));
 
-  $: canSubmit = canMakeMove(
-    gameState,
-    { type: 'submitBans', bans: selectedMaps, player: myColor },
-    myColor
-  );
+  $: canSubmit = isBanPhase
+    ? canMakeMove(gameState, { type: 'submitBans', bans: selectedMaps, player: myColor }, myColor)
+    : false;
+  $: canChooseSide = isSideSelection
+    ? canMakeMove(gameState, { type: 'chooseSide', side: 'CT', player: myColor }, myColor)
+    : false;
 
   $: {
     debugLog('CS2MapBansBoard reactive update:', {
@@ -43,7 +56,9 @@
       requiredBans,
       selectedMaps,
       availableMaps,
-      bannedMaps: gameState.bannedMaps
+      bannedMaps: gameState.bannedMaps,
+      phase: gameState.phase,
+      sideChoice: gameState.sideChoice
     });
   }
 
@@ -62,8 +77,13 @@
 
   function handleSubmit() {
     if (!isMyTurn || !canSubmit) return;
-    dispatch('move', { bans: [...selectedMaps] });
+    dispatch('move', { type: 'submitBans', bans: [...selectedMaps] });
     selectedMaps = [];
+  }
+
+  function handleChooseSide(side: Side) {
+    if (!isMyTurn || !canChooseSide) return;
+    dispatch('move', { type: 'chooseSide', side });
   }
 
   function formatTime(seconds: number): string {
@@ -77,7 +97,7 @@
 </script>
 
 <div class="game-container">
-  {#if connected && gameState.gameStarted && !gameState.winner && !gameState.winningMap && gameState.turnTimeLimit > 0}
+  {#if connected && gameState.gameStarted && !isComplete && gameState.turnTimeLimit > 0}
     <div class="turn-timer" class:urgent={gameState.timeRemaining <= 5}>
       <div class="timer-label">Time remaining</div>
       <div class="timer-display">{formatTime(gameState.timeRemaining)}</div>
@@ -94,27 +114,37 @@
     <div class="player-display" class:active-turn={gameState.currentTurn === myColor}>
       <span class="color-indicator {myColor}"></span>
       <span class="player-name">{myPlayerInfo?.name || 'You'}</span>
-      {#if gameState.currentTurn === myColor && !gameState.winningMap}
-        <span class="turn-indicator">Your ban</span>
+      {#if gameState.currentTurn === myColor && !isComplete}
+        <span class="turn-indicator">{isSideSelection ? 'Choose side' : 'Your ban'}</span>
       {/if}
     </div>
     <div class="vs-divider">VS</div>
     <div class="player-display" class:active-turn={gameState.currentTurn !== myColor}>
       <span class="color-indicator {myColor === 'red' ? 'blue' : 'red'}"></span>
       <span class="player-name">{opponentName}</span>
-      {#if gameState.currentTurn !== myColor && !gameState.winningMap}
-        <span class="turn-indicator">Their ban</span>
+      {#if gameState.currentTurn !== myColor && !isComplete}
+        <span class="turn-indicator">{isSideSelection ? 'Their side' : 'Their ban'}</span>
       {/if}
     </div>
   </div>
 
   <div class="round-info">
-    <div class="round-title">Round {gameState.currentRound + 1} of {gameState.bansPerRound.length}</div>
-    <div class="round-subtitle">
-      {#if gameState.winningMap}
-        Winner decided
+    <div class="round-title">
+      {#if isBanPhase}
+        Round {gameState.currentRound + 1} of {gameState.bansPerRound.length}
+      {:else if isSideSelection}
+        Side selection
       {:else}
+        Final result
+      {/if}
+    </div>
+    <div class="round-subtitle">
+      {#if isBanPhase}
         {currentBannerName} must ban {requiredBans} map{requiredBans === 1 ? '' : 's'}
+      {:else if isSideSelection}
+        {currentBannerName} chooses CT or T side
+      {:else}
+        Map and sides locked in
       {/if}
     </div>
   </div>
@@ -137,7 +167,7 @@
     {/if}
   </div>
 
-  {#if !gameState.winningMap}
+  {#if isBanPhase}
     <div class="selection-status">
       <div class="selection-count">
         Selected: {selectedMaps.length} / {requiredBans}
@@ -167,12 +197,28 @@
     </button>
   {/if}
 
-  {#if gameState.winningMap}
+  {#if isSideSelection}
+    <div class="side-selection">
+      <div class="side-title">Final map</div>
+      <div class="side-map">{gameState.winningMap || '-'}</div>
+      {#if isMyTurn}
+        <div class="side-options">
+          <button class="side-btn ct" on:click={() => handleChooseSide('CT')}>CT</button>
+          <button class="side-btn t" on:click={() => handleChooseSide('T')}>T</button>
+        </div>
+      {:else}
+        <div class="waiting-side">Waiting for {opponentName} to choose side...</div>
+      {/if}
+    </div>
+  {/if}
+
+  {#if isComplete}
     <div class="game-over-overlay">
       <div class="game-over-popup">
         <div class="win-content">
           <h2>Winning map</h2>
           <div class="winning-map">{gameState.winningMap}</div>
+          <div class="winning-side">Your side: {mySide || '-'}</div>
         </div>
         <button on:click={() => dispatch('reset')} class="reset-btn">
           New ban
@@ -462,6 +508,69 @@
     box-shadow: none;
   }
 
+  .side-selection {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .side-title {
+    font-weight: bold;
+    color: #111827;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
+  }
+
+  .side-map {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #2563eb;
+    margin-bottom: 1rem;
+  }
+
+  .side-options {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .side-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: none;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .side-btn.ct {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    color: white;
+  }
+
+  .side-btn.t {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+  }
+
+  .side-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .waiting-side {
+    color: #6b7280;
+    font-style: italic;
+  }
+
   .game-over-overlay {
     position: fixed;
     top: 0;
@@ -499,6 +608,12 @@
     color: #10b981;
     letter-spacing: 1px;
     margin-bottom: 1.5rem;
+  }
+
+  .winning-side {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #1f2937;
   }
 
   .reset-btn {

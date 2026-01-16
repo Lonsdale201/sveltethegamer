@@ -209,9 +209,6 @@
     if (colorDuelWinLength < minWin) colorDuelWinLength = minWin;
   }
 
-  $: if (selectedGameMode === 'cs2-map-bans' && turnTimeLimit !== 20) {
-    turnTimeLimit = 20;
-  }
 
 
   async function handleShareRoom() {
@@ -370,7 +367,6 @@
           step="5"
           class="timer-input"
           placeholder="0 = unlimited"
-          disabled={selectedGameMode === 'cs2-map-bans'}
         />
       </div>
       
@@ -517,6 +513,9 @@
           </p>
           <p class="setting-description">
             Ban order: Player 1 bans 2, Player 2 bans 3, Player 1 bans 1.
+          </p>
+          <p class="setting-description">
+            After bans, the other player chooses CT or T side.
           </p>
         </div>
       {/if}
@@ -799,6 +798,7 @@
               <li><strong>Rounds:</strong> Player 1 bans 2, Player 2 bans 3, Player 1 bans 1</li>
               <li><strong>Timer:</strong> 20 seconds per round</li>
               <li><strong>Result:</strong> The last unbanned map is the winner</li>
+              <li><strong>Side pick:</strong> After bans, the other player chooses CT or T</li>
             </ul>
           </div>
           

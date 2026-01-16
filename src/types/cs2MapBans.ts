@@ -6,19 +6,36 @@ export interface MapBan {
   round: number;
 }
 
+export type Side = 'CT' | 'T';
+
+export type CS2MapBansPhase = 'bans' | 'side-selection' | 'complete';
+
+export interface SideChoice {
+  player: Player | null;
+  side: Side | null;
+}
+
 export interface CS2MapBansGameState extends BaseGameState {
   maps: string[];
   bannedMaps: MapBan[];
   currentRound: number;
   bansPerRound: number[];
   winningMap: string | null;
+  phase: CS2MapBansPhase;
+  sideChoice: SideChoice;
 }
 
-export interface CS2MapBansMoveData {
-  type: 'submitBans';
-  bans: string[];
-  player: Player;
-}
+export type CS2MapBansMoveData =
+  | {
+      type: 'submitBans';
+      bans: string[];
+      player: Player;
+    }
+  | {
+      type: 'chooseSide';
+      side: Side;
+      player: Player;
+    };
 
 export const initialCS2MapBansGameState: CS2MapBansGameState = {
   maps: [],
@@ -26,6 +43,8 @@ export const initialCS2MapBansGameState: CS2MapBansGameState = {
   currentRound: 0,
   bansPerRound: [],
   winningMap: null,
+  phase: 'bans',
+  sideChoice: { player: null, side: null },
   gameStarted: false,
   currentTurn: 'red',
   winner: null,

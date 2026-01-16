@@ -1,11 +1,12 @@
 import { debugLog } from '../../config/debug';
 import { TurnManager } from '../../core/TurnManager';
-import type { CS2MapBansGameState, CS2MapBansMoveData, MapBan } from '../../types/cs2MapBans';
+import type { CS2MapBansGameState, CS2MapBansMoveData, MapBan, Side } from '../../types/cs2MapBans';
 import type { GameSettings, Player } from '../../types/core';
 
 const DEFAULT_MAPS = ['Dust2', 'Mirage', 'Inferno', 'Train', 'Nuke', 'Ancient', 'Overpass'];
 const DEFAULT_BANS_PER_ROUND = [2, 3, 1];
 const DEFAULT_TURN_TIME = 20;
+const SIDES: Side[] = ['CT', 'T'];
 
 function getAvailableMaps(gameState: CS2MapBansGameState): string[] {
   const banned = new Set(gameState.bannedMaps.map((ban) => ban.name));
@@ -30,7 +31,7 @@ function applyBans(
   player: Player,
   selectedBans: string[]
 ): CS2MapBansGameState {
-  if (gameState.winningMap) {
+  if (gameState.phase !== 'bans') {
     return gameState;
   }
 
@@ -41,7 +42,8 @@ function applyBans(
       return {
         ...gameState,
         winningMap: remaining[0],
-        winner: player
+        phase: 'side-selection',
+        sideChoice: { player: null, side: null }
       };
     }
     return gameState;
@@ -76,10 +78,28 @@ function applyBans(
   const remainingMaps = getAvailableMaps(newState);
   if (remainingMaps.length <= 1 || newState.currentRound >= newState.bansPerRound.length) {
     newState.winningMap = remainingMaps[0] ?? null;
-    newState.winner = player;
+    newState.phase = 'side-selection';
+    newState.sideChoice = { player: null, side: null };
   }
 
   return newState;
+}
+
+function applySideChoice(
+  gameState: CS2MapBansGameState,
+  player: Player,
+  side: Side
+): CS2MapBansGameState {
+  if (gameState.phase !== 'side-selection' || !gameState.winningMap) {
+    return gameState;
+  }
+
+  return {
+    ...gameState,
+    sideChoice: { player, side },
+    phase: 'complete',
+    winner: player
+  };
 }
 
 export function canMakeMove(
@@ -89,14 +109,25 @@ export function canMakeMove(
 ): boolean {
   debugLog('CS2MapBans canMakeMove:', { moveData, player, gameState });
 
-  if (!gameState.gameStarted || gameState.winner || gameState.winningMap) return false;
+  if (!gameState.gameStarted || gameState.winner) return false;
   if (!TurnManager.canPlayerAct(gameState, player)) return false;
-  if (gameState.currentRound >= gameState.bansPerRound.length) return false;
-  if (moveData.type !== 'submitBans') return false;
 
-  const availableMaps = getAvailableMaps(gameState);
-  const uniqueSelections = Array.from(new Set(moveData.bans));
-  return uniqueSelections.every((map) => availableMaps.includes(map));
+  if (gameState.phase === 'bans') {
+    if (gameState.currentRound >= gameState.bansPerRound.length) return false;
+    if (moveData.type !== 'submitBans') return false;
+
+    const availableMaps = getAvailableMaps(gameState);
+    const uniqueSelections = Array.from(new Set(moveData.bans));
+    return uniqueSelections.every((map) => availableMaps.includes(map));
+  }
+
+  if (gameState.phase === 'side-selection') {
+    if (moveData.type !== 'chooseSide') return false;
+    if (!gameState.winningMap) return false;
+    return SIDES.includes(moveData.side);
+  }
+
+  return false;
 }
 
 export function makeMove(
@@ -110,12 +141,18 @@ export function makeMove(
   }
 
   return TurnManager.handlePlayerAction(gameState, player, (state) => {
-    const newState = applyBans(state, player, moveData.bans);
-    debugLog('CS2MapBans makeMove: Applied bans', {
-      player,
-      selected: moveData.bans,
-      bannedMaps: newState.bannedMaps
-    });
+    if (moveData.type === 'submitBans') {
+      const newState = applyBans(state, player, moveData.bans);
+      debugLog('CS2MapBans makeMove: Applied bans', {
+        player,
+        selected: moveData.bans,
+        bannedMaps: newState.bannedMaps
+      });
+      return newState;
+    }
+
+    const newState = applySideChoice(state, player, moveData.side);
+    debugLog('CS2MapBans makeMove: Side selected', { player, side: moveData.side });
     return newState;
   });
 }
@@ -130,6 +167,8 @@ export function resetGame(gameSettings: GameSettings): CS2MapBansGameState {
     currentRound: 0,
     bansPerRound: [...DEFAULT_BANS_PER_ROUND],
     winningMap: null,
+    phase: 'bans',
+    sideChoice: { player: null, side: null },
     gameStarted: true,
     currentTurn: 'red',
     winner: null,
@@ -141,12 +180,22 @@ export function resetGame(gameSettings: GameSettings): CS2MapBansGameState {
 }
 
 export function skipTurn(gameState: CS2MapBansGameState): CS2MapBansGameState {
-  if (gameState.winner || gameState.winningMap) {
+  if (gameState.winner) {
     return gameState;
   }
 
   return TurnManager.handleTurnTimeout(gameState, (state) => {
     const player = state.currentTurn;
+    if (state.phase === 'side-selection') {
+      const side = SIDES[Math.floor(Math.random() * SIDES.length)];
+      const newState = applySideChoice(state, player, side);
+      debugLog('CS2MapBans skipTurn: Auto-selected side for timeout', {
+        player,
+        side
+      });
+      return newState;
+    }
+
     const newState = applyBans(state, player, []);
     debugLog('CS2MapBans skipTurn: Auto-banned for timeout', {
       player,

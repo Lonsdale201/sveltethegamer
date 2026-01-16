@@ -132,7 +132,7 @@ export const gameModes: GameMode[] = [
     settingsDisplay: {
       turnTimer: {
         label: 'Ban Timer',
-        getValue: (settings) => `${settings.turnTimeLimit || 20}s per round`,
+        getValue: (settings) => `${settings.turnTimeLimit > 0 ? settings.turnTimeLimit : 20}s per round`,
         icon: 'T'
       },
       banOrder: {

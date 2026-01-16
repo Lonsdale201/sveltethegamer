@@ -258,8 +258,11 @@
         }
       }
     } else if (gameSettings.gameMode === 'cs2-map-bans') {
-      const { bans } = event.detail;
-      const moveData: CS2MapBansMoveData = { type: 'submitBans', bans, player: myColor };
+      const detail = event.detail || {};
+      const moveData: CS2MapBansMoveData =
+        detail.type === 'chooseSide'
+          ? { type: 'chooseSide', side: detail.side, player: myColor }
+          : { type: 'submitBans', bans: detail.bans || [], player: myColor };
       const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
 
       if (newGameState !== gameState) {
