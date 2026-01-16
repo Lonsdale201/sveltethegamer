@@ -491,7 +491,7 @@
 
   .selection-status {
     text-align: center;
-    color: #374151;
+    color: #ffffff;
   }
 
   .selection-count {
@@ -500,7 +500,7 @@
 
   .selection-hint {
     font-size: 0.8rem;
-    color: #6b7280;
+    color: #ffffff;
     margin-top: 0.25rem;
   }
 
