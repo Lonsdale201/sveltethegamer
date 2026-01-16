@@ -874,12 +874,12 @@
   .header h1 {
     font-size: 2.5rem;
     margin: 0;
-    color: #333;
+    color: #ffffff;
   }
 
   .header p {
     font-size: 1.1rem;
-    color: #666;
+    color: #e5e7eb;
     margin: 0.5rem 0 0 0;
   }
 
