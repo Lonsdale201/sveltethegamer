@@ -4,6 +4,15 @@
   import type { CS2MapBansGameState, Side } from '../../types/cs2MapBans';
   import type { Player, PlayerInfo } from '../../types/core';
   import { canMakeMove } from './CS2MapBansLogic';
+  import ctIcon from '../../assets/ct-icon.webp';
+  import tIcon from '../../assets/t-icon.webp';
+  import d2Image from '../../assets/d2.webp';
+  import ancientImage from '../../assets/ancient.webp';
+  import infernoImage from '../../assets/inferno.webp';
+  import mirageImage from '../../assets/mirage.webp';
+  import nukeImage from '../../assets/nuke.webp';
+  import overpassImage from '../../assets/overpass.webp';
+  import trainImage from '../../assets/train.webp';
 
   export let gameState: CS2MapBansGameState;
   export let myColor: Player;
@@ -15,6 +24,7 @@
 
   let selectedMaps: string[] = [];
   let lastRound = -1;
+  let selectedSide: Side | null = null;
 
   $: isBanPhase = gameState.phase === 'bans';
   $: isSideSelection = gameState.phase === 'side-selection';
@@ -31,6 +41,8 @@
   $: mySide = sideSelected && sideChooser
     ? (myColor === sideChooser ? sideSelected : (sideSelected === 'CT' ? 'T' : 'CT'))
     : null;
+  $: displaySide = sideSelected ?? selectedSide;
+  $: winningMapImage = gameState.winningMap ? getMapImage(gameState.winningMap) : '';
 
   $: if (gameState.currentRound !== lastRound) {
     selectedMaps = [];
@@ -39,6 +51,10 @@
 
   $: if (!isBanPhase && selectedMaps.length > 0) {
     selectedMaps = [];
+  }
+
+  $: if (!isSideSelection) {
+    selectedSide = sideSelected ?? null;
   }
 
   $: selectedMaps = selectedMaps.filter((map) => !bannedSet.has(map));
@@ -83,7 +99,21 @@
 
   function handleChooseSide(side: Side) {
     if (!isMyTurn || !canChooseSide) return;
+    selectedSide = side;
     dispatch('move', { type: 'chooseSide', side });
+  }
+
+  function getMapImage(mapName: string): string {
+    const mapImages: Record<string, string> = {
+      Dust2: d2Image,
+      Mirage: mirageImage,
+      Inferno: infernoImage,
+      Train: trainImage,
+      Nuke: nukeImage,
+      Ancient: ancientImage,
+      Overpass: overpassImage
+    };
+    return mapImages[mapName] || '';
   }
 
   function formatTime(seconds: number): string {
@@ -184,10 +214,11 @@
           disabled={!isMyTurn}
           on:click={() => toggleMap(mapName)}
         >
-          <div class="map-name">{mapName}</div>
-          {#if selectedMaps.includes(mapName)}
-            <div class="map-selected">Selected</div>
-          {/if}
+          <img class="map-image" src={getMapImage(mapName)} alt={`${mapName} map`} loading="lazy" />
+          <div class="map-label">{mapName}</div>
+          <div class="map-overlay">
+            <span class="map-check">✓</span>
+          </div>
         </button>
       {/each}
     </div>
@@ -202,12 +233,31 @@
       <div class="side-title">Final map</div>
       <div class="side-map">{gameState.winningMap || '-'}</div>
       {#if isMyTurn}
+        <div class="side-prompt">Choose your side</div>
         <div class="side-options">
-          <button class="side-btn ct" on:click={() => handleChooseSide('CT')}>CT</button>
-          <button class="side-btn t" on:click={() => handleChooseSide('T')}>T</button>
+          <button
+            class="side-card {displaySide === 'CT' ? 'selected' : ''}"
+            on:click={() => handleChooseSide('CT')}
+          >
+            <img class="side-image" src={ctIcon} alt="CT side icon" />
+            <div class="side-label">CT</div>
+            <div class="side-overlay">
+              <span class="side-check">✓</span>
+            </div>
+          </button>
+          <button
+            class="side-card {displaySide === 'T' ? 'selected' : ''}"
+            on:click={() => handleChooseSide('T')}
+          >
+            <img class="side-image" src={tIcon} alt="T side icon" />
+            <div class="side-label">T</div>
+            <div class="side-overlay">
+              <span class="side-check">✓</span>
+            </div>
+          </button>
         </div>
       {:else}
-        <div class="waiting-side">Waiting for {opponentName} to choose side...</div>
+        <div class="side-prompt">Waiting for {opponentName} to choose side...</div>
       {/if}
     </div>
   {/if}
@@ -217,8 +267,25 @@
       <div class="game-over-popup">
         <div class="win-content">
           <h2>Winning map</h2>
-          <div class="winning-map">{gameState.winningMap}</div>
-          <div class="winning-side">Your side: {mySide || '-'}</div>
+          <div class="result-map-card">
+            <img
+              class="result-map-image"
+              src={winningMapImage}
+              alt={gameState.winningMap ? `${gameState.winningMap} map` : 'Selected map'}
+            />
+            <div class="result-map-name">{gameState.winningMap || '-'}</div>
+          </div>
+          <div class="result-side">
+            <div class="result-label">Your side</div>
+            <div class="result-card">
+              <img
+                class="result-image"
+                src={mySide === 'CT' ? ctIcon : tIcon}
+                alt="Selected side icon"
+              />
+              <div class="result-side-text">{mySide || '-'}</div>
+            </div>
+          </div>
         </div>
         <button on:click={() => dispatch('reset')} class="reset-btn">
           New ban
@@ -447,12 +514,16 @@
   .map-card {
     border: 2px solid #e5e7eb;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0;
     background: white;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
     min-height: 90px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .map-card:hover:not(:disabled) {
@@ -472,16 +543,45 @@
     opacity: 0.6;
   }
 
-  .map-name {
-    font-weight: bold;
-    color: #1f2937;
-    margin-bottom: 0.25rem;
+  .map-image {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+    display: block;
   }
 
-  .map-selected {
-    font-size: 0.8rem;
+  .map-label {
+    font-weight: bold;
+    color: #1f2937;
+    padding: 0.65rem 0;
+    background: white;
+  }
+
+  .map-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .map-card.selected .map-overlay {
+    opacity: 1;
+  }
+
+  .map-check {
+    font-size: 2.5rem;
     color: #10b981;
-    font-weight: 600;
+    background: white;
+    border-radius: 999px;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .submit-btn {
@@ -534,36 +634,86 @@
     margin-bottom: 1rem;
   }
 
+  .side-prompt {
+    font-size: 0.95rem;
+    color: #374151;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+
   .side-options {
     display: flex;
     gap: 1rem;
     justify-content: center;
   }
 
-  .side-btn {
+  .side-card {
     flex: 1;
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-    border: none;
-    font-weight: bold;
-    font-size: 1rem;
+    padding: 0;
+    border-radius: 14px;
+    border: 2px solid #e5e7eb;
+    background: #f9fafb;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .side-btn.ct {
-    background: linear-gradient(135deg, #0ea5e9, #2563eb);
-    color: white;
-  }
-
-  .side-btn.t {
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: white;
-  }
-
-  .side-btn:hover {
+  .side-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .side-card.selected {
+    border-color: #10b981;
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+  }
+
+  .side-image {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .side-label {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #111827;
+    padding: 0.75rem 0;
+    width: 100%;
+    text-align: center;
+    background: white;
+  }
+
+  .side-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .side-card.selected .side-overlay {
+    opacity: 1;
+  }
+
+  .side-check {
+    font-size: 2.5rem;
+    color: #10b981;
+    background: white;
+    border-radius: 999px;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .waiting-side {
@@ -614,6 +764,74 @@
     font-size: 1.2rem;
     font-weight: bold;
     color: #1f2937;
+  }
+
+  .result-side {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .result-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+  }
+
+  .result-card {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    background: white;
+    min-width: 160px;
+  }
+
+  .result-map-card {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    background: white;
+    margin-bottom: 1rem;
+  }
+
+  .result-map-image {
+    width: 220px;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .result-map-name {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #111827;
+    padding: 0.6rem 0;
+    width: 100%;
+    text-align: center;
+    background: #f9fafb;
+  }
+  .result-image {
+    width: 160px;
+    height: 100px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .result-side-text {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #111827;
+    padding: 0.5rem 0;
+    width: 100%;
+    text-align: center;
+    background: #f9fafb;
   }
 
   .reset-btn {
