@@ -13,9 +13,10 @@
   import type { TowerWarGameState, TowerWarMoveData } from './types/towerWar';
   import type { ShadowCodeGameState, ShadowCodeMoveData } from './types/shadowCode';
   import type { BrainstormingGameState, BrainstormingMoveData } from './types/brainstorming';
+  import type { CS2MapBansGameState, CS2MapBansMoveData } from './types/cs2MapBans';
 
   let gameManager: GameManager | null = null;
-  let gameState: ColorDuelGameState | TowerWarGameState | ShadowCodeGameState | BrainstormingGameState;
+  let gameState: ColorDuelGameState | TowerWarGameState | ShadowCodeGameState | BrainstormingGameState | CS2MapBansGameState;
   let gradientCanvas: HTMLCanvasElement;
   let granim: any;
   let turnTimer: number | null = null;
@@ -161,6 +162,9 @@
         } else if (gameSettings.gameMode === 'brainstorming') {
           const moveData: BrainstormingMoveData = message.data;
           gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
+        } else if (gameSettings.gameMode === 'cs2-map-bans') {
+          const moveData: CS2MapBansMoveData = message.data;
+          gameState = currentGameMode.gameLogic.makeMove(gameState, moveData, moveData.player);
         }
         
         debugLog('App handleGameMessage move - gameState after makeMove:', gameState);
@@ -189,7 +193,7 @@
     }
   }
 
-  function handleMove(event: CustomEvent<{ x: number; y: number }>) {
+  function handleMove(event: CustomEvent<any>) {
     if (!gameManager || !connected || !gameStarted || !currentGameMode) return;
     
     if (gameSettings.gameMode === 'color-duel') {
@@ -252,6 +256,20 @@
             data: moveData
           });
         }
+      }
+    } else if (gameSettings.gameMode === 'cs2-map-bans') {
+      const { bans } = event.detail;
+      const moveData: CS2MapBansMoveData = { type: 'submitBans', bans, player: myColor };
+      const newGameState = currentGameMode.gameLogic.makeMove(gameState, moveData, myColor);
+
+      if (newGameState !== gameState) {
+        gameState = newGameState;
+        startTurnTimer();
+
+        gameManager.sendMessage({
+          type: 'move',
+          data: moveData
+        });
       }
     }
   }

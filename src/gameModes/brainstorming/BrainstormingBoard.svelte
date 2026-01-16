@@ -247,7 +247,6 @@
           {#if gameState.showingFeedback}
             <!-- Feedback Phase -->
             <!-- Debug log to check state when feedback mode activates -->
-            {debugLog('BrainstormingBoard: Entering feedback mode. myLastAnswer:', myLastAnswer, 'opponentLastAnswer:', opponentLastAnswer, 'currentQuestion.id:', currentQuestion?.id)}
             <div class="feedback-section">
               <h3>📊 Round Results</h3>
               

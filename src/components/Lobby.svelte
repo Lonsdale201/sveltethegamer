@@ -209,6 +209,10 @@
     if (colorDuelWinLength < minWin) colorDuelWinLength = minWin;
   }
 
+  $: if (selectedGameMode === 'cs2-map-bans' && turnTimeLimit !== 20) {
+    turnTimeLimit = 20;
+  }
+
 
   async function handleShareRoom() {
     if (navigator.share && roomCode) {
@@ -366,6 +370,7 @@
           step="5"
           class="timer-input"
           placeholder="0 = unlimited"
+          disabled={selectedGameMode === 'cs2-map-bans'}
         />
       </div>
       
@@ -504,6 +509,17 @@
           </p>
         </div>
       {/if}
+
+      {#if selectedGameMode === 'cs2-map-bans'}
+        <div class="cs2-map-bans-setting">
+          <p class="setting-description">
+            CS2 Map Bans uses a fixed 20 second timer for each ban round.
+          </p>
+          <p class="setting-description">
+            Ban order: Player 1 bans 2, Player 2 bans 3, Player 1 bans 1.
+          </p>
+        </div>
+      {/if}
       
       <button 
         on:click={handleCreateRoom} 
@@ -568,6 +584,13 @@
           on:click={() => activeTab = 'brainstorming'}
         >
           🧠 Brainstorming
+        </button>
+        <button 
+          class="tab-btn" 
+          class:active={activeTab === 'cs2-map-bans'}
+          on:click={() => activeTab = 'cs2-map-bans'}
+        >
+          CS2 Map Bans
         </button>
         <button 
           class="tab-btn" 
@@ -759,6 +782,30 @@
               <li><strong>Hungarian 🇭🇺:</strong> Questions about Hungarian history, culture, and general knowledge</li>
               <li><strong>English 🇬🇧:</strong> Same questions translated to English for international players</li>
               <li><strong>Expandable:</strong> Developers can easily add more languages and questions</li>
+            </ul>
+          </div>
+        </div>
+      {:else if activeTab === 'cs2-map-bans'}
+        <div class="game-rules">
+          <h4>CS2 Map Bans</h4>
+          <p class="game-description">
+            A quick ban phase to decide the final CS2 map with alternating captain bans.
+          </p>
+          
+          <div class="rules-section">
+            <h5>How to Play</h5>
+            <ul>
+              <li><strong>Maps:</strong> Dust2, Mirage, Inferno, Train, Nuke, Ancient, Overpass</li>
+              <li><strong>Rounds:</strong> Player 1 bans 2, Player 2 bans 3, Player 1 bans 1</li>
+              <li><strong>Timer:</strong> 20 seconds per round</li>
+              <li><strong>Result:</strong> The last unbanned map is the winner</li>
+            </ul>
+          </div>
+          
+          <div class="rules-section">
+            <h5>Auto-bans</h5>
+            <ul>
+              <li>If you do not ban enough maps before time runs out, the remaining bans are random.</li>
             </ul>
           </div>
         </div>
@@ -1359,6 +1406,11 @@
 
   .color-duel-setting label:first-child {
     margin-top: 0;
+  }
+
+  .cs2-map-bans-setting {
+    margin-bottom: 1rem;
+    text-align: left;
   }
 
   @keyframes shake {

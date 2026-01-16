@@ -3,14 +3,17 @@ import ColorDuelBoard from './colorDuel/ColorDuelBoard.svelte';
 import TowerWarBoard from './towerWar/TowerWarBoard.svelte';
 import ShadowCodeBoard from './shadowCode/ShadowCodeBoard.svelte';
 import BrainstormingBoard from './brainstorming/BrainstormingBoard.svelte';
+import CS2MapBansBoard from './cs2MapBans/CS2MapBansBoard.svelte';
 import * as ColorDuelLogic from './colorDuel/ColorDuelLogic';
 import * as TowerWarLogic from './towerWar/TowerWarLogic';
 import * as ShadowCodeLogic from './shadowCode/ShadowCodeLogic';
 import * as BrainstormingLogic from './brainstorming/BrainstormingLogic';
+import * as CS2MapBansLogic from './cs2MapBans/CS2MapBansLogic';
 import { initialColorDuelGameState } from '../types/colorDuel';
 import { initialTowerWarGameState } from '../types/towerWar';
 import { initialShadowCodeGameState } from '../types/shadowCode';
 import { initialBrainstormingGameState } from '../types/brainstorming';
+import { initialCS2MapBansGameState } from '../types/cs2MapBans';
 
 export const gameModes: GameMode[] = [
   {
@@ -115,6 +118,27 @@ export const gameModes: GameMode[] = [
           return topics && topics.length ? topics.join(', ') : 'All topics';
         },
         icon: '📚'
+      }
+    }
+  },
+  {
+    id: 'cs2-map-bans',
+    name: 'CS2 Map Bans',
+    description: 'Alternate bans to decide the final CS2 map',
+    component: CS2MapBansBoard,
+    initialState: () => ({ ...initialCS2MapBansGameState }),
+    gameLogic: CS2MapBansLogic,
+    turnMode: 'sequential',
+    settingsDisplay: {
+      turnTimer: {
+        label: 'Ban Timer',
+        getValue: (settings) => `${settings.turnTimeLimit || 20}s per round`,
+        icon: 'T'
+      },
+      banOrder: {
+        label: 'Ban Order',
+        getValue: () => '2 bans, 3 bans, 1 ban',
+        icon: '>'
       }
     }
   }
