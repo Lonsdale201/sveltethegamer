@@ -674,9 +674,11 @@
 
   .side-image {
     width: 100%;
-    height: 140px;
-    object-fit: cover;
+    height: 120px;
+    object-fit: contain;
     display: block;
+    padding: 0.75rem;
+    background: white;
   }
 
   .side-label {
@@ -819,9 +821,11 @@
   }
   .result-image {
     width: 160px;
-    height: 100px;
-    object-fit: cover;
+    height: 90px;
+    object-fit: contain;
     display: block;
+    padding: 0.5rem;
+    background: white;
   }
 
   .result-side-text {
